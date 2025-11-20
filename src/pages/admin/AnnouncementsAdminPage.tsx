@@ -23,16 +23,6 @@ export function AnnouncementsAdminPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      window.location.href = '/admin/login';
-      return;
-    }
-    if (!authLoading && user) {
-      loadAnnouncements();
-    }
-  }, [user, authLoading, loadAnnouncements]);
-
   const loadAnnouncements = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -51,6 +41,16 @@ export function AnnouncementsAdminPage() {
 
     setLoading(false);
   }, [showError]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      window.location.href = '/admin/login';
+      return;
+    }
+    if (!authLoading && user) {
+      loadAnnouncements();
+    }
+  }, [user, authLoading, loadAnnouncements]);
 
   async function handleDelete(id: string) {
     if (!confirm('Bu duyuruyu silmek istediğinizden emin misiniz?')) return;
