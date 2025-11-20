@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Calendar, Clock } from 'lucide-react';
 import { formatDate } from '../lib/youtube';
+import { PageLayout } from '../components/PageLayout';
 
 interface BlogPost {
   id: string;
@@ -34,41 +35,34 @@ export function BlogPage() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold text-green-500 mb-4 glow-text">
-            Blog
-          </h1>
-          <p className="text-zinc-400 text-lg">
-            Elektrik, elektronik ve underground teknoloji yazıları
-          </p>
+    <PageLayout
+      title="Atölyeden ve masadan notlar"
+      description="Elektrik tasarımları, üretim günlükleri ve topluluk hikâyeleri. Uzun okuma seviyorsanız kahvenizi hazır edin."
+      eyebrow="Blog"
+      actions={[{ label: 'Video içeriklere dön', href: '/videos' }]}
+    >
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse space-y-3">
+              <div className="h-52 rounded-2xl bg-white/5" />
+              <div className="h-4 rounded bg-white/5" />
+              <div className="h-3 rounded bg-white/5 w-2/3" />
+            </div>
+          ))}
         </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-zinc-800 h-64 rounded-lg mb-4"></div>
-                <div className="h-4 bg-zinc-800 rounded mb-2"></div>
-                <div className="h-3 bg-zinc-800 rounded w-2/3 mb-2"></div>
-                <div className="h-3 bg-zinc-800 rounded"></div>
-              </div>
-            ))}
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-zinc-400 text-lg">Henüz yazı yok.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map((post, index) => (
-              <BlogCard key={post.id} post={post} index={index} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+      ) : posts.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-zinc-400 text-lg">Henüz yazı yok.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {posts.map((post, index) => (
+            <BlogCard key={post.id} post={post} index={index} />
+          ))}
+        </div>
+      )}
+    </PageLayout>
   );
 }
 
@@ -79,36 +73,37 @@ function BlogCard({ post, index }: { post: BlogPost; index: number }) {
       className="group block opacity-0 animate-[fadeIn_0.5s_ease-out_forwards]"
       style={{ animationDelay: `${index * 100}ms` }}
     >
-      <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg overflow-hidden hover:border-green-500/40 transition-all duration-300 h-full flex flex-col">
-        {post.featured_image && (
-          <div className="aspect-video overflow-hidden">
+      <div className="relative overflow-hidden rounded-2xl mb-4 bg-white/5 border border-white/10 group-hover:border-green-400/30 transition-all duration-300 shadow-lg shadow-green-500/5">
+        <div className="aspect-[16/10] bg-gradient-to-br from-green-500/20 via-zinc-900 to-emerald-500/20">
+          {post.featured_image ? (
             <img
               src={post.featured_image}
               alt={post.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              loading="lazy"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
-          </div>
-        )}
-        <div className="p-6 flex-1 flex flex-col">
-          <h3 className="text-xl font-semibold text-zinc-100 mb-3 group-hover:text-green-500 transition-colors line-clamp-2">
-            {post.title}
-          </h3>
-          {post.excerpt && (
-            <p className="text-zinc-400 text-sm line-clamp-3 mb-4 flex-1">{post.excerpt}</p>
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-zinc-500">Kapak görseli yok</div>
           )}
-          <div className="flex items-center justify-between text-xs text-zinc-500 pt-4 border-t border-zinc-800">
-            <span className="flex items-center space-x-1">
-              <Calendar className="w-3 h-3" />
-              <span>{formatDate(post.published_at)}</span>
-            </span>
-            {post.reading_time > 0 && (
-              <span className="flex items-center space-x-1">
-                <Clock className="w-3 h-3" />
-                <span>{post.reading_time} dk</span>
-              </span>
-            )}
-          </div>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div className="flex items-center space-x-3 text-sm text-zinc-400">
+          <span className="flex items-center space-x-1">
+            <Calendar className="w-4 h-4" />
+            <span>{formatDate(post.published_at)}</span>
+          </span>
+          <span className="flex items-center space-x-1">
+            <Clock className="w-4 h-4" />
+            <span>{post.reading_time} dk</span>
+          </span>
+        </div>
+        <h3 className="text-xl font-semibold text-white group-hover:text-green-400 transition-colors line-clamp-2">
+          {post.title}
+        </h3>
+        <p className="text-zinc-300 line-clamp-3">{post.excerpt}</p>
+        <div className="flex items-center space-x-2 text-green-400 font-semibold">
+          <span>Devamını oku</span>
+          <span className="transform transition-transform group-hover:translate-x-1">→</span>
         </div>
       </div>
     </a>

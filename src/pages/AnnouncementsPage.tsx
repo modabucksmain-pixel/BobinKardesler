@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Bell, Calendar, ArrowUpRight } from 'lucide-react';
 import { getPublishedAnnouncements, type Announcement } from '../lib/announcements';
 import { formatDate } from '../lib/youtube';
+import { PageLayout } from '../components/PageLayout';
 
 export function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -19,70 +20,63 @@ export function AnnouncementsPage() {
   }
 
   return (
-    <div className="min-h-screen pt-20 sm:pt-24 pb-16 bg-gradient-to-b from-zinc-950 via-zinc-950 to-zinc-900">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center space-x-3 px-4 py-3 bg-green-500/10 border border-green-500/30 rounded-full mb-6">
-            <Bell className="w-6 h-6 text-green-500" />
-            <span className="text-green-500 font-semibold">Güncel Duyurular</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-zinc-100 mb-4 glow-text">
-            Bobin Kardeşler Duyuruları
-          </h1>
-          <p className="text-zinc-400 max-w-2xl mx-auto">
-            Etkinlikler, güncellemeler ve topluluk için önemli hatırlatmalar bu alanda paylaşılıyor.
-          </p>
-        </div>
-
-        {loading ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-40 bg-zinc-900/60 border border-zinc-800 rounded-xl animate-pulse"></div>
-            ))}
-          </div>
-        ) : announcements.length === 0 ? (
-          <div className="text-center py-16 bg-zinc-900/50 border border-zinc-800 rounded-xl">
-            <Bell className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-            <p className="text-zinc-400 text-lg">Henüz duyuru paylaşılmadı.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {announcements.map((announcement, index) => (
-              <AnnouncementCard key={announcement.id} announcement={announcement} index={index} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function AnnouncementCard({ announcement, index }: { announcement: Announcement; index: number }) {
-  return (
-    <article
-      className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 hover:border-green-500/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-green-500/10 animate-scale-in"
-      style={{ animationDelay: `${index * 80}ms` }}
+    <PageLayout
+      title="Güncel duyurular ve hatırlatmalar"
+      description="Yayın planları, canlı yayın tarihleri ve topluluk için önemli güncellemeler burada toplanıyor."
+      eyebrow="Duyuru Panosu"
+      actions={[{ label: 'Topluluk sayfasına git', href: '/topluluk' }]}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-500/10 text-green-400 border border-green-500/30">
-              Duyuru
-            </span>
-            <span className="flex items-center text-xs text-zinc-400">
-              <Calendar className="w-4 h-4 mr-1" />
-              {formatDate(announcement.publish_at)}
-            </span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 mb-2">{announcement.title}</h2>
-          {announcement.summary && <p className="text-zinc-300 mb-4">{announcement.summary}</p>}
-          <div
-            className="prose prose-invert max-w-none text-sm leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: announcement.content }}
-          />
+      {loading ? (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-40 bg-white/5 border border-white/10 rounded-2xl animate-pulse"></div>
+          ))}
         </div>
-        <ArrowUpRight className="w-6 h-6 text-zinc-600" />
-      </div>
-    </article>
+      ) : announcements.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-zinc-400 text-lg">Şimdilik duyuru bulunmuyor.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {announcements.map((announcement, index) => (
+            <div
+              key={announcement.id}
+              className="surface-panel relative overflow-hidden p-6 sm:p-8"
+              style={{ animationDelay: `${index * 80}ms` }}
+            >
+              <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-green-500/5 to-transparent pointer-events-none" />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-zinc-400 uppercase tracking-[0.25em]">
+                    <Bell className="h-4 w-4 text-green-400" />
+                    <span>Yeni paylaşım</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">{announcement.title}</h2>
+                  <p className="text-zinc-300 leading-relaxed">{announcement.content}</p>
+                  {announcement.link && (
+                    <a
+                      href={announcement.link}
+                      className="inline-flex items-center gap-2 text-sm text-green-300 font-semibold hover:text-green-100"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Dış bağlantı
+                      <ArrowUpRight className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+                <div className="flex flex-col items-start sm:items-end gap-2 text-sm text-zinc-400">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                    <Calendar className="h-4 w-4 text-green-300" />
+                    <span>{formatDate(announcement.created_at)}</span>
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.2em] text-green-300">Topluluk yayını</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </PageLayout>
   );
 }
