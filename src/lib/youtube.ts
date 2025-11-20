@@ -5,6 +5,7 @@ export interface YouTubeVideo {
   title: string;
   description: string;
   thumbnail: string;
+  isVertical?: boolean;
   publishedAt: string;
   viewCount: string;
   likeCount: string;
@@ -146,6 +147,18 @@ function parseDurationToSeconds(duration: string): number {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
+function getPreferredThumbnail(thumbnails: any): { url: string; width?: number; height?: number } {
+  const preferenceOrder = ['maxres', 'standard', 'high', 'medium', 'default'];
+  for (const key of preferenceOrder) {
+    const option = thumbnails?.[key];
+    if (option?.url) {
+      return { url: option.url, width: option.width, height: option.height };
+    }
+  }
+
+  return { url: '' };
+}
+
 export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeVideo[]> {
   const cached = await getCachedData<YouTubeVideo[]>('latest_videos');
   if (cached) return cached;
@@ -199,7 +212,18 @@ export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeV
         id: item.id,
         title: item.snippet.title,
         description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.high.url,
+        ...(() => {
+          const thumbnail = getPreferredThumbnail(item.snippet.thumbnails);
+          const isVertical =
+            typeof thumbnail.width === 'number' && typeof thumbnail.height === 'number'
+              ? thumbnail.height > thumbnail.width
+              : false;
+
+          return {
+            thumbnail: thumbnail.url,
+            isVertical,
+          };
+        })(),
         publishedAt: item.snippet.publishedAt,
         viewCount: item.statistics.viewCount || '0',
         likeCount: item.statistics.likeCount || '0',
@@ -209,10 +233,18 @@ export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeV
 
     const filteredVideos = videos.filter((video) => {
       const title = video.title.toLowerCase();
-      const looksLikeShort = title.includes('#short') || title.includes('shorts');
-      const isTooShort = (video.durationSeconds || 0) > 0 && (video.durationSeconds || 0) < 60;
+      const description = video.description.toLowerCase();
+      const looksLikeShort =
+        title.includes('#short') ||
+        title.includes('shorts') ||
+        title.includes('short ') ||
+        description.includes('#short') ||
+        description.includes('shorts');
+      const durationSeconds = video.durationSeconds || 0;
+      const isTooShort = durationSeconds > 0 && durationSeconds < 120;
+      const isVerticalFormat = video.isVertical === true;
 
-      return !looksLikeShort && !isTooShort;
+      return !looksLikeShort && !isTooShort && !isVerticalFormat;
     });
 
     await setCachedData('latest_videos', filteredVideos);
