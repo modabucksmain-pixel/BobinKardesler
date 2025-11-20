@@ -232,6 +232,41 @@ export interface Database {
           updated_at?: string
         }
       }
+      announcements: {
+        Row: {
+          id: string
+          title: string
+          summary: string | null
+          content: string
+          publish_at: string
+          published: boolean
+          priority: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          summary?: string | null
+          content: string
+          publish_at?: string
+          published?: boolean
+          priority?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          summary?: string | null
+          content?: string
+          publish_at?: string
+          published?: boolean
+          priority?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
       projects: {
         Row: {
           id: string

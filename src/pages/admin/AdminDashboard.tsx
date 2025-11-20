@@ -2,7 +2,21 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { getChannelStats, type ChannelStats, formatNumber } from '../../lib/youtube';
-import { FileText, Video, Users, Eye, LogOut, Plus, Lightbulb, Gift, MessageSquare, Wrench, BarChart3, Mail } from 'lucide-react';
+import {
+  FileText,
+  Video,
+  Users,
+  Eye,
+  LogOut,
+  Plus,
+  Lightbulb,
+  Gift,
+  MessageSquare,
+  Wrench,
+  BarChart3,
+  Mail,
+  Bell,
+} from 'lucide-react';
 
 export function AdminDashboard() {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -139,6 +153,13 @@ export function AdminDashboard() {
             description="Topluluk duyurularını oluştur ve yönet"
             icon={<MessageSquare className="w-8 h-8" />}
             actions={[{ label: 'Duyuruları Yönet', href: '/admin/community' }]}
+          />
+
+          <ActionCard
+            title="Site Duyuruları"
+            description="Ana sayfa duyurularını yönet ve yayınla"
+            icon={<Bell className="w-8 h-8" />}
+            actions={[{ label: 'Duyuruları Yönet', href: '/admin/announcements' }]}
           />
 
           <ActionCard

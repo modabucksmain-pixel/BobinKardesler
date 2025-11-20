@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Eye, ThumbsUp, Video, Users, Play } from 'lucide-react';
+import { Eye, ThumbsUp, Video, Users, Play, Bell, Calendar } from 'lucide-react';
 import { getChannelStats, getLatestVideos, formatNumber, formatDate, type YouTubeVideo, type ChannelStats } from '../lib/youtube';
 import { supabase } from '../lib/supabase';
+import { getPublishedAnnouncements, type Announcement } from '../lib/announcements';
 
 interface BlogPost {
   id: string;
@@ -16,6 +17,7 @@ export function HomePage() {
   const [stats, setStats] = useState<ChannelStats | null>(null);
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export function HomePage() {
 
   async function loadData() {
     setLoading(true);
-    const [channelStats, latestVideos, blogData] = await Promise.all([
+    const [channelStats, latestVideos, blogData, announcementData] = await Promise.all([
       getChannelStats(),
       getLatestVideos(6),
       supabase
@@ -33,11 +35,13 @@ export function HomePage() {
         .eq('status', 'published')
         .order('published_at', { ascending: false })
         .limit(3),
+      getPublishedAnnouncements(3),
     ]);
 
     setStats(channelStats);
     setVideos(latestVideos);
     if (blogData.data) setBlogPosts(blogData.data);
+    setAnnouncements(announcementData);
     setLoading(false);
   }
 
@@ -98,6 +102,50 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      {announcements.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-green-500/10 rounded-full">
+                <Bell className="w-6 h-6 text-green-500" />
+              </div>
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100">Duyurular</h2>
+                <p className="text-zinc-500 text-sm">Son yayınlanan site duyuruları</p>
+              </div>
+            </div>
+            <a href="/duyurular" className="text-green-500 hover:text-green-400 text-sm font-semibold">
+              Tümünü Gör →
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {announcements.map((announcement, index) => (
+              <div
+                key={announcement.id}
+                className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 hover:border-green-500/40 transition-all duration-300 hover:-translate-y-1 animate-scale-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="flex items-center text-xs text-zinc-400">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    {formatDate(announcement.publish_at)}
+                  </span>
+                  <span className="px-2 py-1 text-[11px] font-semibold rounded-full bg-green-500/10 text-green-400 border border-green-500/30">
+                    Öncelik {announcement.priority}
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold text-zinc-100 mb-2 line-clamp-2">{announcement.title}</h3>
+                {announcement.summary && (
+                  <p className="text-zinc-400 text-sm line-clamp-3 mb-4">{announcement.summary}</p>
+                )}
+                <a href="/duyurular" className="text-green-500 font-semibold text-sm">Detaylar →</a>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="flex items-center justify-between mb-12">
