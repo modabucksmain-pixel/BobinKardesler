@@ -1,11 +1,29 @@
 import { useState } from 'react';
-import { Zap, Youtube, Mail, Send, Sparkles } from 'lucide-react';
+import { Zap, Youtube, Mail, Send, Sparkles, Terminal, ShieldCheck, Activity } from 'lucide-react';
 import { subscribeToNewsletter } from '../lib/newsletter';
 
 export function Footer() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+
+  const updateLog = [
+    {
+      time: '22:14',
+      status: 'DEPLOY',
+      message: 'Yeni "Uzun Format" filtreleri aktifleştirildi. Shorts devre dışı.',
+    },
+    {
+      time: '21:02',
+      status: 'SYNC',
+      message: 'Topluluk duyuruları Supabase ile eşitlendi.',
+    },
+    {
+      time: '20:45',
+      status: 'BUILD',
+      message: 'Atölye logları için neon terminal teması eklendi.',
+    },
+  ];
 
   async function handleSubscribe(e: React.FormEvent) {
     e.preventDefault();
@@ -118,6 +136,64 @@ export function Footer() {
                   <Mail className="h-4 w-4" />
                   info@bobinkardesler.com
                 </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-12 relative overflow-hidden rounded-2xl border border-green-500/20 bg-gradient-to-br from-zinc-950 via-zinc-950/70 to-black shadow-2xl">
+          <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.15),_transparent_45%)]" />
+          <div className="absolute inset-0 border border-white/5 rounded-2xl" />
+          <div className="relative p-6 sm:p-8 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-green-500/15 border border-green-500/30 flex items-center justify-center text-green-300 shadow-inner">
+                  <Terminal className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-green-400 flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    Günlük Akışı
+                  </p>
+                  <h4 className="text-lg font-bold text-white">Underground Log</h4>
+                </div>
+              </div>
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-green-500/15 text-green-300 border border-green-500/40 uppercase tracking-[0.2em]">
+                Canlı
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs text-green-100">
+              {updateLog.map((entry) => (
+                <div
+                  key={entry.time + entry.status}
+                  className="relative overflow-hidden rounded-xl border border-green-500/20 bg-black/60 px-4 py-3 shadow-lg shadow-green-500/10"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 via-transparent to-emerald-500/10" />
+                  <div className="relative flex items-center justify-between text-[11px] text-green-400">
+                    <span className="flex items-center gap-2">
+                      <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                      {entry.time}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-green-500/20 border border-green-500/40 text-[10px] font-black tracking-[0.2em]">
+                      {entry.status}
+                    </span>
+                  </div>
+                  <p className="relative mt-2 text-sm leading-relaxed text-zinc-100">
+                    <span className="text-green-400">$</span> {entry.message}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="relative mt-2 flex items-center justify-between text-xs text-green-300/80 font-mono">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                <span>Veri hattı şifreli | Son bağlantı: {new Date().toLocaleTimeString('tr-TR')}</span>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 text-green-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-ping" />
+                <span>Stüdyo çevrimiçi</span>
               </div>
             </div>
           </div>
