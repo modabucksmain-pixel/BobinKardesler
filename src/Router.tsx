@@ -12,6 +12,7 @@ import { GiveawaysPage } from './pages/GiveawaysPage';
 import { CommunityPage } from './pages/CommunityPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { PollsPage } from './pages/PollsPage';
+import { AnnouncementsPage } from './pages/AnnouncementsPage';
 import { LoginPage } from './pages/admin/LoginPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { BlogListPage } from './pages/admin/BlogListPage';
@@ -19,6 +20,7 @@ import { BlogEditorPage } from './pages/admin/BlogEditorPage';
 import { VideoSuggestionsAdminPage } from './pages/admin/VideoSuggestionsAdminPage';
 import { GiveawaysAdminPage } from './pages/admin/GiveawaysAdminPage';
 import { CommunityAdminPage } from './pages/admin/CommunityAdminPage';
+import { AnnouncementsAdminPage } from './pages/admin/AnnouncementsAdminPage';
 import { ProjectsAdminPage } from './pages/admin/ProjectsAdminPage';
 import { PollsAdminPage } from './pages/admin/PollsAdminPage';
 import { NewsletterAdminPage } from './pages/admin/NewsletterAdminPage';
@@ -68,6 +70,8 @@ export function Router() {
     content = <ProjectsPage />;
   } else if (path === '/anketler') {
     content = <PollsPage />;
+  } else if (path === '/duyurular') {
+    content = <AnnouncementsPage />;
   } else if (path === '/hakkimizda') {
     content = <AboutPage />;
   } else if (path === '/admin/login') {
@@ -87,6 +91,8 @@ export function Router() {
     content = <GiveawaysAdminPage />;
   } else if (path === '/admin/community') {
     content = <CommunityAdminPage />;
+  } else if (path === '/admin/announcements') {
+    content = <AnnouncementsAdminPage />;
   } else if (path === '/admin/projects') {
     content = <ProjectsAdminPage />;
   } else if (path === '/admin/polls') {

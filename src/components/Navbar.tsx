@@ -49,6 +49,9 @@ export function Navbar() {
             <Link href="/blog" className="nav-link">
               Blog
             </Link>
+            <Link href="/duyurular" className="nav-link">
+              Duyurular
+            </Link>
             <Link href="/topluluk" className="nav-link">
               Topluluk
             </Link>
@@ -105,6 +108,13 @@ export function Navbar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Blog
+            </Link>
+            <Link
+              href="/duyurular"
+              className="block py-2 text-zinc-300 hover:text-green-500 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Duyurular
             </Link>
             <Link
               href="/topluluk"
