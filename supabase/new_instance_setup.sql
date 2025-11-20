@@ -910,32 +910,6 @@ CREATE TRIGGER update_blog_post_ratings_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Insert default video categories
-INSERT INTO video_categories (name, slug, description, icon, color) VALUES
-  ('Arduino & Microcontrollers', 'arduino-microcontrollers', 'Arduino, ESP32, STM32 projeleri', 'Cpu', '#3b82f6'),
-  ('Power Electronics', 'power-electronics', 'Güç elektroniği ve güç kaynakları', 'Zap', '#eab308'),
-  ('Amplifiers & Audio', 'amplifiers-audio', 'Amplifikatör ve ses sistemleri', 'Volume2', '#8b5cf6'),
-  ('Robotics', 'robotics', 'Robot projeleri ve otomasyon', 'Bot', '#ec4899'),
-  ('PCB Design', 'pcb-design', 'PCB tasarım ve üretim', 'Cpu', '#22c55e'),
-  ('Motor Control', 'motor-control', 'Motor sürücüler ve kontrol', 'Settings', '#f97316'),
-  ('Solar & Renewable', 'solar-renewable', 'Güneş enerjisi ve yenilenebilir enerji', 'Sun', '#facc15'),
-  ('Underground Projects', 'underground', 'Deneysel ve underground projeler', 'Flame', '#ef4444')
-ON CONFLICT (slug) DO NOTHING;
-
--- Insert some default tags
-INSERT INTO video_tags (name, slug) VALUES
-  ('Başlangıç', 'baslangic'),
-  ('İleri Seviye', 'ileri-seviye'),
-  ('DIY', 'diy'),
-  ('Eğitim', 'egitim'),
-  ('Proje', 'proje'),
-  ('Tutorial', 'tutorial'),
-  ('Elektronik', 'elektronik'),
-  ('Programlama', 'programlama'),
-  ('3D Printing', '3d-printing'),
-  ('測試', 'test')
-ON CONFLICT (slug) DO NOTHING;
-
 -- Source: 20251119084046_create_giveaways_system.sql
 
 /*
