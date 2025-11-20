@@ -23,6 +23,7 @@ import {
 import { getChannelStats, getLatestVideos, formatNumber, formatDate, type YouTubeVideo, type ChannelStats } from '../lib/youtube';
 import { supabase } from '../lib/supabase';
 import { getPublishedAnnouncements, type Announcement } from '../lib/announcements';
+import { getCommunityPosts, type CommunityPost } from '../lib/community';
 
 interface BlogPost {
   id: string;
@@ -38,6 +39,7 @@ export function HomePage() {
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   const featureHighlights = useMemo(
@@ -94,7 +96,7 @@ export function HomePage() {
 
   async function loadData() {
     setLoading(true);
-    const [channelStats, latestVideos, blogData, announcementData] = await Promise.all([
+    const [channelStats, latestVideos, blogData, announcementData, communityData] = await Promise.all([
       getChannelStats(),
       getLatestVideos(8),
       supabase
@@ -104,12 +106,14 @@ export function HomePage() {
         .order('published_at', { ascending: false })
         .limit(3),
       getPublishedAnnouncements(3),
+      getCommunityPosts(3),
     ]);
 
     setStats(channelStats);
     setVideos(latestVideos);
     if (blogData.data) setBlogPosts(blogData.data);
     setAnnouncements(announcementData);
+    setCommunityPosts(communityData);
     setLoading(false);
   }
 
@@ -252,6 +256,58 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      {communityPosts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-green-500/10 rounded-full border border-green-500/20">
+                <Megaphone className="w-6 h-6 text-green-400" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-zinc-50">Topluluk Duyuruları</h2>
+                <p className="text-zinc-500 text-sm">Ekipten son paylaşımlar ve sabitlenen içerikler</p>
+              </div>
+            </div>
+            <a href="/topluluk" className="text-green-400 hover:text-green-300 text-sm font-semibold inline-flex items-center">
+              Topluluğa git <ArrowUpRight className="w-4 h-4 ml-1" />
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {communityPosts.map((post, index) => (
+              <div
+                key={post.id}
+                className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5 hover:border-green-500/40 transition-all duration-300 hover:-translate-y-1 animate-scale-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="flex items-center justify-between mb-3 text-xs text-zinc-400">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {formatDate(post.created_at)}
+                  </span>
+                  {post.pinned && (
+                    <span className="px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/30 font-semibold">
+                      Sabit
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2">{post.title}</h3>
+                <div
+                  className="text-sm text-zinc-300 line-clamp-3 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
+                />
+                <a
+                  href="/topluluk"
+                  className="mt-4 inline-flex items-center text-green-400 font-semibold text-sm hover:text-green-300"
+                >
+                  Detaya git <ArrowUpRight className="w-4 h-4 ml-1" />
+                </a>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {announcements.length > 0 && (
         <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
