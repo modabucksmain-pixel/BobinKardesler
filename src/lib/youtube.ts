@@ -169,7 +169,7 @@ function getPreferredThumbnail(thumbnails: any): { url: string; width?: number; 
 
 export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeVideo[]> {
   const cached = await getCachedData<YouTubeVideo[]>('latest_videos');
-  if (cached) return cached;
+  if (cached?.length) return cached;
 
   const apiKey = await getYouTubeApiKey();
   const channelId = await getYouTubeChannelId();
@@ -254,6 +254,11 @@ export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeV
 
       return !looksLikeShort && !isTooShort && !isVerticalFormat;
     });
+
+    if (!filteredVideos.length) {
+      console.warn('No eligible videos after filtering, falling back to mock data');
+      return getMockVideos();
+    }
 
     await setCachedData('latest_videos', filteredVideos);
     return filteredVideos;
