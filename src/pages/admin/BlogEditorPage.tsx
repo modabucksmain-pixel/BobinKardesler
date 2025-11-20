@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { Save, ArrowLeft, Eye, FileText } from 'lucide-react';
+import { Save, ArrowLeft, FileText } from 'lucide-react';
 
 interface BlogPost {
   id?: string;
@@ -25,6 +25,7 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -78,17 +79,36 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
   }
 
   async function handleSave(status: 'draft' | 'published') {
+    setError('');
+
+    if (!post.title.trim()) {
+      setError('Başlık zorunludur.');
+      return;
+    }
+
+    if (!post.content.trim()) {
+      setError('İçerik zorunludur.');
+      return;
+    }
+
     setSaving(true);
 
-    const slug = post.slug || generateSlug(post.title);
+    const slug = (post.slug || generateSlug(post.title)).trim();
+
+    if (!slug) {
+      setError('Slug oluşturulamadı. Lütfen başlık girin ya da slug alanını doldurun.');
+      setSaving(false);
+      return;
+    }
+
     const readingTime = calculateReadingTime(post.content);
     const now = new Date().toISOString();
 
     const postData = {
-      title: post.title,
+      title: post.title.trim(),
       slug,
-      content: post.content,
-      excerpt: post.excerpt,
+      content: post.content.trim(),
+      excerpt: post.excerpt?.trim() || null,
       featured_image: post.featured_image || null,
       status,
       reading_time: readingTime,
@@ -97,30 +117,35 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
       ...(status === 'published' && !post.id ? { published_at: now } : {}),
     };
 
-    if (post.id) {
-      const { error } = await supabase
-        .from('blog_posts')
-        .update(postData)
-        .eq('id', post.id);
+    try {
+      if (post.id) {
+        const { error } = await supabase
+          .from('blog_posts')
+          .update(postData)
+          .eq('id', post.id);
 
-      if (!error) {
-        alert('Yazı güncellendi!');
-        window.location.href = '/admin/blog';
+        if (!error) {
+          alert('Yazı güncellendi!');
+          window.location.href = '/admin/blog';
+        } else {
+          setError('Hata: ' + error.message);
+        }
       } else {
-        alert('Hata: ' + error.message);
-      }
-    } else {
-      const { error } = await supabase.from('blog_posts').insert(postData);
+        const { error } = await supabase.from('blog_posts').insert(postData);
 
-      if (!error) {
-        alert('Yazı kaydedildi!');
-        window.location.href = '/admin/blog';
-      } else {
-        alert('Hata: ' + error.message);
+        if (!error) {
+          alert('Yazı kaydedildi!');
+          window.location.href = '/admin/blog';
+        } else {
+          setError('Hata: ' + error.message);
+        }
       }
+    } catch (err) {
+      console.error('Blog kaydedilirken hata oluştu', err);
+      setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   }
 
   if (authLoading || !user) {
@@ -180,6 +205,12 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
               </button>
             </div>
           </div>
+
+          {error && (
+            <div className="mt-2 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -189,10 +220,13 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
               type="text"
               value={post.title}
               onChange={(e) => {
-                setPost({ ...post, title: e.target.value });
-                if (!post.id) {
-                  setPost({ ...post, title: e.target.value, slug: generateSlug(e.target.value) });
-                }
+                const newTitle = e.target.value;
+                setPost((prev) => {
+                  if (!prev.id) {
+                    return { ...prev, title: newTitle, slug: generateSlug(newTitle) };
+                  }
+                  return { ...prev, title: newTitle };
+                });
               }}
               className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:border-green-500 text-zinc-100 text-xl font-semibold transition-colors"
               placeholder="Yazı başlığı..."
