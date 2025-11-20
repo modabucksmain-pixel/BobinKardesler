@@ -66,7 +66,11 @@ export async function getYouTubeApiKey(): Promise<string | null> {
     .eq('key', 'youtube_api_key')
     .maybeSingle();
 
-  if (!data?.value || typeof data.value === 'string') return null;
+  if (!data?.value) return null;
+
+  if (typeof data.value === 'string') {
+    return data.value;
+  }
 
   const valueObj = data.value as { api_key?: string };
   return valueObj.api_key || null;
@@ -84,7 +88,11 @@ export async function getYouTubeChannelId(): Promise<string | null> {
     .eq('key', 'youtube_channel_id')
     .maybeSingle();
 
-  if (!data?.value || typeof data.value === 'string') return null;
+  if (!data?.value) return null;
+
+  if (typeof data.value === 'string') {
+    return data.value;
+  }
 
   const valueObj = data.value as { channel_id?: string };
   return valueObj.channel_id || null;
