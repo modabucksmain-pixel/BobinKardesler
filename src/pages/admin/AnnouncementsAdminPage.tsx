@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Bell, Edit, Plus, Trash2, ToggleLeft, ToggleRight, Clock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { supabase } from '../../lib/supabase';
 
 interface Announcement {
@@ -16,6 +17,7 @@ interface Announcement {
 
 export function AnnouncementsAdminPage() {
   const { user, loading: authLoading } = useAuth();
+  const { success, error: showError } = useNotification();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -29,32 +31,55 @@ export function AnnouncementsAdminPage() {
     if (!authLoading && user) {
       loadAnnouncements();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, loadAnnouncements]);
 
-  async function loadAnnouncements() {
+  const loadAnnouncements = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('announcements')
       .select('*')
       .order('priority', { ascending: false })
       .order('publish_at', { ascending: false });
 
-    if (data) setAnnouncements(data);
+    if (error) {
+      console.error('Failed to load announcements', error);
+      showError('Duyurular yüklenemedi: ' + error.message);
+      setAnnouncements([]);
+    } else if (data) {
+      setAnnouncements(data);
+    }
+
     setLoading(false);
-  }
+  }, [showError]);
 
   async function handleDelete(id: string) {
     if (!confirm('Bu duyuruyu silmek istediğinizden emin misiniz?')) return;
 
     const { error } = await supabase.from('announcements').delete().eq('id', id);
 
-    if (!error) {
-      loadAnnouncements();
+    if (error) {
+      console.error('Failed to delete announcement', error);
+      showError('Duyuru silinemedi: ' + error.message);
+      return;
     }
+
+    success('Duyuru silindi');
+    loadAnnouncements();
   }
 
   async function togglePublished(id: string, currentStatus: boolean) {
-    await supabase.from('announcements').update({ published: !currentStatus }).eq('id', id);
+    const { error } = await supabase
+      .from('announcements')
+      .update({ published: !currentStatus, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Failed to toggle publish status', error);
+      showError('Yayın durumu değiştirilemedi: ' + error.message);
+      return;
+    }
+
+    success(currentStatus ? 'Duyuru yayından kaldırıldı' : 'Duyuru yayına alındı');
     loadAnnouncements();
   }
 
@@ -212,35 +237,54 @@ function AnnouncementModal({
   const [published, setPublished] = useState(announcement?.published ?? false);
   const [contentType, setContentType] = useState<'text' | 'html'>(announcement ? 'html' : 'text');
   const [loading, setLoading] = useState(false);
+  const { success, error: showError } = useNotification();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
+    if (!title.trim()) {
+      showError('Başlık gereklidir');
+      setLoading(false);
+      return;
+    }
+
     const publishDate = new Date(publishAt);
+    if (Number.isNaN(publishDate.getTime())) {
+      showError('Geçerli bir yayın tarihi seçin');
+      setLoading(false);
+      return;
+    }
+
     const finalContent =
       contentType === 'text'
         ? `<p>${content.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`
         : content;
 
     const payload = {
-      title,
-      summary: summary || null,
+      title: title.trim(),
+      summary: summary.trim() ? summary.trim() : null,
       content: finalContent,
       publish_at: publishDate.toISOString(),
       priority,
       published,
     };
 
-    if (announcement) {
-      await supabase
-        .from('announcements')
-        .update({ ...payload, updated_at: new Date().toISOString() })
-        .eq('id', announcement.id);
-    } else {
-      await supabase.from('announcements').insert(payload);
+    const response = announcement
+      ? await supabase
+          .from('announcements')
+          .update({ ...payload, updated_at: new Date().toISOString() })
+          .eq('id', announcement.id)
+      : await supabase.from('announcements').insert(payload);
+
+    if (response.error) {
+      console.error('Failed to save announcement', response.error);
+      showError('Duyuru kaydedilemedi: ' + response.error.message);
+      setLoading(false);
+      return;
     }
 
+    success(announcement ? 'Duyuru güncellendi' : 'Yeni duyuru oluşturuldu');
     setLoading(false);
     onSaved();
   }
