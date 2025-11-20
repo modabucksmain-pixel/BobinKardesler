@@ -7,7 +7,6 @@ import {
   Video,
   Users,
   Eye,
-  LogOut,
   Plus,
   Lightbulb,
   Gift,
@@ -17,9 +16,10 @@ import {
   Mail,
   Bell,
 } from 'lucide-react';
+import { AdminLayout } from '../../components/AdminLayout';
 
 export function AdminDashboard() {
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState<ChannelStats | null>(null);
   const [blogCount, setBlogCount] = useState(0);
   const [totalViews, setTotalViews] = useState(0);
@@ -52,11 +52,6 @@ export function AdminDashboard() {
     setLoading(false);
   }
 
-  async function handleSignOut() {
-    await signOut();
-    window.location.href = '/admin/login';
-  }
-
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -66,132 +61,120 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-4xl font-bold text-green-500 mb-2 glow-text">Admin Paneli</h1>
-            <p className="text-zinc-400 text-sm sm:text-base">Hoş geldiniz, {user.email}</p>
-          </div>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center space-x-2 px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors text-sm sm:text-base"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Çıkış</span>
-          </button>
+    <AdminLayout
+      title="Admin Paneli"
+      description={user?.email ? `Hoş geldiniz, ${user.email}` : 'Kontrol ve içerik yönetimi'}
+      actions={[{ label: 'Yeni Blog Yazısı', href: '/admin/blog/new' }, { label: 'Site Ayarları', href: '/admin/settings' }]}
+    >
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="animate-pulse bg-white/5 border border-white/5 rounded-2xl h-32" />
+          ))}
         </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="animate-pulse bg-zinc-800 rounded-lg p-6 h-32"></div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 mb-12">
-            <StatCard
-              icon={<Users className="w-6 h-6" />}
-              label="YouTube Aboneleri"
-              value={stats ? formatNumber(stats.subscriberCount) : '0'}
-              color="yellow"
-            />
-            <StatCard
-              icon={<Video className="w-6 h-6" />}
-              label="Toplam Video"
-              value={stats ? formatNumber(stats.videoCount) : '0'}
-              color="yellow"
-            />
-            <StatCard
-              icon={<FileText className="w-6 h-6" />}
-              label="Blog Yazıları"
-              value={blogCount.toString()}
-              color="yellow"
-            />
-            <StatCard
-              icon={<Eye className="w-6 h-6" />}
-              label="Blog Görüntülenmeleri"
-              value={formatNumber(totalViews.toString())}
-              color="yellow"
-            />
-            <StatCard
-              icon={<Lightbulb className="w-6 h-6" />}
-              label="Bekleyen Öneriler"
-              value={suggestionsCount.toString()}
-              color="green"
-            />
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          <ActionCard
-            title="Blog Yönetimi"
-            description="Blog yazılarını görüntüle, düzenle veya yeni yazı oluştur"
-            icon={<FileText className="w-8 h-8" />}
-            actions={[
-              { label: 'Yeni Yazı', href: '/admin/blog/new', icon: <Plus className="w-4 h-4" /> },
-              { label: 'Tüm Yazılar', href: '/admin/blog' },
-            ]}
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 mb-12">
+          <StatCard
+            icon={<Users className="w-6 h-6" />}
+            label="YouTube Aboneleri"
+            value={stats ? formatNumber(stats.subscriberCount) : '0'}
+            color="yellow"
           />
-
-          <ActionCard
-            title="Çekiliş Yönetimi"
-            description="Çekilişleri oluştur, yönet ve kazanan seç"
-            icon={<Gift className="w-8 h-8" />}
-            actions={[{ label: 'Çekilişleri Yönet', href: '/admin/cekilisler' }]}
+          <StatCard
+            icon={<Video className="w-6 h-6" />}
+            label="Toplam Video"
+            value={stats ? formatNumber(stats.videoCount) : '0'}
+            color="yellow"
           />
-
-          <ActionCard
-            title="Video Önerileri"
-            description="Kullanıcı önerilerini görüntüle ve yönet"
-            icon={<Lightbulb className="w-8 h-8" />}
-            actions={[{ label: 'Önerileri Yönet', href: '/admin/video-suggestions' }]}
+          <StatCard
+            icon={<FileText className="w-6 h-6" />}
+            label="Blog Yazıları"
+            value={blogCount.toString()}
+            color="yellow"
           />
-
-          <ActionCard
-            title="Topluluk Duyuruları"
-            description="Topluluk duyurularını oluştur ve yönet"
-            icon={<MessageSquare className="w-8 h-8" />}
-            actions={[{ label: 'Duyuruları Yönet', href: '/admin/community' }]}
+          <StatCard
+            icon={<Eye className="w-6 h-6" />}
+            label="Blog Görüntülenmeleri"
+            value={formatNumber(totalViews.toString())}
+            color="yellow"
           />
-
-          <ActionCard
-            title="Site Duyuruları"
-            description="Ana sayfa duyurularını yönet ve yayınla"
-            icon={<Bell className="w-8 h-8" />}
-            actions={[{ label: 'Duyuruları Yönet', href: '/admin/announcements' }]}
-          />
-
-          <ActionCard
-            title="Proje Galerisi"
-            description="Projeleri ekle, düzenle ve yönet"
-            icon={<Wrench className="w-8 h-8" />}
-            actions={[{ label: 'Projeleri Yönet', href: '/admin/projects' }]}
-          />
-
-          <ActionCard
-            title="Anketler"
-            description="Topluluk anketleri oluştur ve yönet"
-            icon={<BarChart3 className="w-8 h-8" />}
-            actions={[{ label: 'Anketleri Yönet', href: '/admin/polls' }]}
-          />
-
-          <ActionCard
-            title="Bülten Aboneleri"
-            description="E-posta abonelerini görüntüle"
-            icon={<Mail className="w-8 h-8" />}
-            actions={[{ label: 'Aboneleri Görüntüle', href: '/admin/newsletter' }]}
-          />
-
-          <ActionCard
-            title="Site Ayarları"
-            description="YouTube API anahtarı, kanal ID ve diğer site ayarları"
-            icon={<Video className="w-8 h-8" />}
-            actions={[{ label: 'Ayarları Düzenle', href: '/admin/settings' }]}
+          <StatCard
+            icon={<Lightbulb className="w-6 h-6" />}
+            label="Bekleyen Öneriler"
+            value={suggestionsCount.toString()}
+            color="green"
           />
         </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <ActionCard
+          title="Blog Yönetimi"
+          description="Blog yazılarını görüntüle, düzenle veya yeni yazı oluştur"
+          icon={<FileText className="w-8 h-8" />}
+          actions={[
+            { label: 'Yeni Yazı', href: '/admin/blog/new', icon: <Plus className="w-4 h-4" /> },
+            { label: 'Tüm Yazılar', href: '/admin/blog' },
+          ]}
+        />
+
+        <ActionCard
+          title="Çekiliş Yönetimi"
+          description="Çekilişleri oluştur, yönet ve kazanan seç"
+          icon={<Gift className="w-8 h-8" />}
+          actions={[{ label: 'Çekilişleri Yönet', href: '/admin/cekilisler' }]}
+        />
+
+        <ActionCard
+          title="Video Önerileri"
+          description="Kullanıcı önerilerini görüntüle ve yönet"
+          icon={<Lightbulb className="w-8 h-8" />}
+          actions={[{ label: 'Önerileri Yönet', href: '/admin/video-suggestions' }]}
+        />
+
+        <ActionCard
+          title="Topluluk Duyuruları"
+          description="Topluluk duyurularını oluştur ve yönet"
+          icon={<MessageSquare className="w-8 h-8" />}
+          actions={[{ label: 'Duyuruları Yönet', href: '/admin/community' }]}
+        />
+
+        <ActionCard
+          title="Site Duyuruları"
+          description="Ana sayfa duyurularını yönet ve yayınla"
+          icon={<Bell className="w-8 h-8" />}
+          actions={[{ label: 'Duyuruları Yönet', href: '/admin/announcements' }]}
+        />
+
+        <ActionCard
+          title="Proje Galerisi"
+          description="Projeleri ekle, düzenle ve yönet"
+          icon={<Wrench className="w-8 h-8" />}
+          actions={[{ label: 'Projeleri Yönet', href: '/admin/projects' }]}
+        />
+
+        <ActionCard
+          title="Anketler"
+          description="Topluluk anketleri oluştur ve yönet"
+          icon={<BarChart3 className="w-8 h-8" />}
+          actions={[{ label: 'Anketleri Yönet', href: '/admin/polls' }]}
+        />
+
+        <ActionCard
+          title="Bülten Aboneleri"
+          description="E-posta abonelerini görüntüle"
+          icon={<Mail className="w-8 h-8" />}
+          actions={[{ label: 'Aboneleri Görüntüle', href: '/admin/newsletter' }]}
+        />
+
+        <ActionCard
+          title="Site Ayarları"
+          description="YouTube API anahtarı, kanal ID ve diğer site ayarları"
+          icon={<Video className="w-8 h-8" />}
+          actions={[{ label: 'Ayarları Düzenle', href: '/admin/settings' }]}
+        />
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 

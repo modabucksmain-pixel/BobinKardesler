@@ -187,3 +187,25 @@
     background-position: 100% 0;
   }
 }
+
+.bg-grid {
+  background: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+  position: relative;
+}
+
+.surface-panel {
+  @apply border border-white/10 bg-white/5 rounded-2xl backdrop-blur-xl shadow-lg shadow-green-500/5;
+}
+
+.section-heading {
+  @apply text-xl sm:text-2xl font-semibold text-white;
+}
+
+.section-subtitle {
+  @apply text-sm sm:text-base text-zinc-300;
+}
+
+.badge-soft {
+  @apply inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-green-300;
+}
