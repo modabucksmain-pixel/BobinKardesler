@@ -9,6 +9,7 @@ export interface YouTubeVideo {
   viewCount: string;
   likeCount: string;
   commentCount: string;
+  durationSeconds?: number;
 }
 
 export interface ChannelStats {
@@ -133,6 +134,18 @@ export async function getChannelStats(): Promise<ChannelStats | null> {
   }
 }
 
+function parseDurationToSeconds(duration: string): number {
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+
+  if (!match) return 0;
+
+  const hours = Number(match[1] || 0);
+  const minutes = Number(match[2] || 0);
+  const seconds = Number(match[3] || 0);
+
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
 export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeVideo[]> {
   const cached = await getCachedData<YouTubeVideo[]>('latest_videos');
   if (cached) return cached;
@@ -174,26 +187,36 @@ export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeV
     if (!videoIds) return [];
 
     const videosResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds}&key=${apiKey}`
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds}&key=${apiKey}`
     );
 
     if (!videosResponse.ok) throw new Error('Failed to fetch video details');
 
     const videosData = await videosResponse.json();
 
-    const videos: YouTubeVideo[] = videosData.items?.map((item: any) => ({
-      id: item.id,
-      title: item.snippet.title,
-      description: item.snippet.description,
-      thumbnail: item.snippet.thumbnails.high.url,
-      publishedAt: item.snippet.publishedAt,
-      viewCount: item.statistics.viewCount || '0',
-      likeCount: item.statistics.likeCount || '0',
-      commentCount: item.statistics.commentCount || '0',
-    })) || [];
+    const videos: YouTubeVideo[] =
+      videosData.items?.map((item: any) => ({
+        id: item.id,
+        title: item.snippet.title,
+        description: item.snippet.description,
+        thumbnail: item.snippet.thumbnails.high.url,
+        publishedAt: item.snippet.publishedAt,
+        viewCount: item.statistics.viewCount || '0',
+        likeCount: item.statistics.likeCount || '0',
+        commentCount: item.statistics.commentCount || '0',
+        durationSeconds: parseDurationToSeconds(item.contentDetails?.duration || ''),
+      })) || [];
 
-    await setCachedData('latest_videos', videos);
-    return videos;
+    const filteredVideos = videos.filter((video) => {
+      const title = video.title.toLowerCase();
+      const looksLikeShort = title.includes('#short') || title.includes('shorts');
+      const isTooShort = (video.durationSeconds || 0) > 0 && (video.durationSeconds || 0) < 60;
+
+      return !looksLikeShort && !isTooShort;
+    });
+
+    await setCachedData('latest_videos', filteredVideos);
+    return filteredVideos;
   } catch (error) {
     console.error('Error fetching videos:', error);
     return getMockVideos();

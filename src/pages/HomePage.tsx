@@ -306,6 +306,9 @@ export function HomePage() {
           <div>
             <h2 className="text-3xl sm:text-4xl font-bold text-zinc-50 mb-2">Son Videolar</h2>
             <p className="text-zinc-500">Atölyeden taze kayıtlar, proje yürüyüşleri ve ipuçları</p>
+            <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 text-green-300 text-xs font-semibold">
+              Sadece uzun format videolar listelenir (Shorts gizlendi)
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center space-x-2 text-sm text-zinc-400">

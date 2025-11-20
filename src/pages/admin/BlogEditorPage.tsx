@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Save, ArrowLeft, FileText } from 'lucide-react';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface BlogPost {
   id?: string;
@@ -15,6 +16,7 @@ interface BlogPost {
 
 export function BlogEditorPage({ postId }: { postId?: string }) {
   const { user, loading: authLoading } = useAuth();
+  const { success, error: showError, info } = useNotification();
   const [post, setPost] = useState<BlogPost>({
     title: '',
     slug: '',
@@ -26,6 +28,14 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const draftKey = postId ? `blog-editor-${postId}` : 'blog-editor-new';
+
+  const wordCount = useMemo(() => {
+    if (!post.content.trim()) return 0;
+    return post.content.trim().split(/\s+/).length;
+  }, [post.content]);
+
+  const readingTime = useMemo(() => calculateReadingTime(post.content), [post.content]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -34,8 +44,25 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
     }
     if (!authLoading && user && postId) {
       loadPost();
+    } else if (!authLoading && user) {
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft) as BlogPost;
+          setPost(parsed);
+          info('Kaydedilmemiş taslak geri yüklendi');
+        } catch (e) {
+          console.error('Taslak yüklenemedi', e);
+        }
+      }
     }
-  }, [user, authLoading, postId]);
+  }, [user, authLoading, postId, draftKey, info]);
+
+  useEffect(() => {
+    if (!authLoading && user && !postId) {
+      localStorage.setItem(draftKey, JSON.stringify(post));
+    }
+  }, [post, draftKey, authLoading, user, postId]);
 
   async function loadPost() {
     setLoading(true);
@@ -101,7 +128,7 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
       return;
     }
 
-    const readingTime = calculateReadingTime(post.content);
+    const calculatedReadingTime = readingTime;
     const now = new Date().toISOString();
 
     const postData = {
@@ -111,7 +138,7 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
       excerpt: post.excerpt?.trim() || null,
       featured_image: post.featured_image || null,
       status,
-      reading_time: readingTime,
+      reading_time: calculatedReadingTime,
       author_id: user?.id,
       updated_at: now,
       ...(status === 'published' && !post.id ? { published_at: now } : {}),
@@ -125,24 +152,29 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
           .eq('id', post.id);
 
         if (!error) {
-          alert('Yazı güncellendi!');
+          success('Yazı güncellendi');
+          localStorage.removeItem(draftKey);
           window.location.href = '/admin/blog';
         } else {
           setError('Hata: ' + error.message);
+          showError('Yazı güncellenemedi: ' + error.message);
         }
       } else {
         const { error } = await supabase.from('blog_posts').insert(postData);
 
         if (!error) {
-          alert('Yazı kaydedildi!');
+          success('Yeni yazı kaydedildi');
+          localStorage.removeItem(draftKey);
           window.location.href = '/admin/blog';
         } else {
           setError('Hata: ' + error.message);
+          showError('Yazı kaydedilemedi: ' + error.message);
         }
       }
     } catch (err) {
       console.error('Blog kaydedilirken hata oluştu', err);
       setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+      showError('Kaydetme sırasında hata oluştu');
     } finally {
       setSaving(false);
     }
@@ -206,6 +238,21 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
             </div>
           </div>
 
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-zinc-400">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-900/60 border border-zinc-800">
+              <FileText className="w-4 h-4 text-green-400" />
+              <span>{wordCount} kelime</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-900/60 border border-zinc-800">
+              <Save className="w-4 h-4 text-green-400" />
+              <span>Tahmini okuma süresi: {readingTime} dk</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-900/60 border border-zinc-800">
+              <span className="text-zinc-500">URL:</span>
+              <code className="text-green-400">/blog/{post.slug || generateSlug(post.title) || 'yeni-yazi'}</code>
+            </div>
+          </div>
+
           {error && (
             <div className="mt-2 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
               {error}
@@ -231,6 +278,7 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
               className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:border-green-500 text-zinc-100 text-xl font-semibold transition-colors"
               placeholder="Yazı başlığı..."
             />
+            <p className="mt-1 text-xs text-zinc-500">Başlık ve otomatik slug kaydedilip geri yüklenir.</p>
           </div>
 
           <div>
@@ -257,6 +305,10 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
               className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:border-green-500 text-zinc-100 transition-colors resize-none"
               placeholder="Yazının kısa özeti..."
             />
+            <div className="flex items-center justify-between text-xs text-zinc-500 mt-1">
+              <span>{post.excerpt.length || 0} karakter</span>
+              <span>Önerilen: 140-200 karakter</span>
+            </div>
           </div>
 
           <div>
@@ -270,6 +322,7 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
               className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:border-green-500 text-zinc-100 transition-colors"
               placeholder="https://example.com/image.jpg"
             />
+            <p className="mt-1 text-xs text-zinc-500">(Opsiyonel) Görsel eklemezseniz varsayılan kapak kullanılır.</p>
           </div>
 
           <div>
@@ -283,6 +336,37 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
               className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:border-green-500 text-zinc-100 font-mono text-sm transition-colors resize-y min-h-[300px]"
               placeholder="<p>Yazı içeriği...</p>"
             />
+            <div className="flex items-center justify-between text-xs text-zinc-500 mt-1">
+              <span>{wordCount} kelime</span>
+              <span>~{readingTime} dk okuma</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-zinc-900/60 border border-zinc-800 rounded-lg p-4">
+              <h2 className="text-lg font-semibold text-zinc-100 mb-2">Taslak Önizleme</h2>
+              <p className="text-sm text-zinc-500 mb-3">Bu alan canlı olarak güncellenir ve ana sayfada nasıl görüneceğini gösterir.</p>
+              <div className="space-y-2">
+                <div className="aspect-video rounded-lg overflow-hidden bg-zinc-800 border border-zinc-700">
+                  {post.featured_image ? (
+                    <img src={post.featured_image} alt="Öne çıkan" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-zinc-600 text-sm">Görsel seçilmedi</div>
+                  )}
+                </div>
+                <h3 className="text-xl font-semibold text-zinc-50">{post.title || 'Başlık bekleniyor'}</h3>
+                <p className="text-sm text-zinc-400 line-clamp-3">{post.excerpt || 'Özet eklediğinizde burada görünecek.'}</p>
+                <div className="text-xs text-zinc-500">Tahmini okuma süresi: {readingTime} dk</div>
+              </div>
+            </div>
+            <div className="bg-zinc-900/60 border border-zinc-800 rounded-lg p-4">
+              <h2 className="text-lg font-semibold text-zinc-100 mb-2">Yayın Notları</h2>
+              <ul className="text-sm text-zinc-400 space-y-2 list-disc list-inside">
+                <li>Slug otomatik oluşturulur, dilerseniz düzenleyebilirsiniz.</li>
+                <li>Kaydetmeden çıkarsanız taslaklar otomatik olarak saklanır.</li>
+                <li>Yayınlanan yazılar ana sayfa ve blog listesinde görünecektir.</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
