@@ -9,11 +9,8 @@ import {
   Bell,
   Calendar,
   Sparkles,
-  Activity,
   ShieldCheck,
-  Radio,
   Rocket,
-  Cpu,
   Waves,
   ArrowUpRight,
   BookOpen,
@@ -41,30 +38,6 @@ export function HomePage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const featureHighlights = useMemo(
-    () => [
-      {
-        title: 'Elektrik Lab',
-        description: 'Gerçek zamanlı deneyler, devre kurulumları ve atölyeden sahne arkası paylaşımlar.',
-        icon: <Activity className="w-6 h-6" />,
-        accent: 'Canlı',
-      },
-      {
-        title: 'Projeler & Şemalar',
-        description: 'PCB tasarımlarından mikrodenetleyici entegrasyonlarına kadar tüm dokümantasyon tek sayfada.',
-        icon: <Cpu className="w-6 h-6" />,
-        accent: 'Yeni',
-      },
-      {
-        title: 'Topluluk Meydanı',
-        description: 'Anketler, çekilişler ve haftalık meydan okumalarla aktif bir maker topluluğu.',
-        icon: <Radio className="w-6 h-6" />,
-        accent: 'Interaktif',
-      },
-    ],
-    [],
-  );
 
   const learningTracks = useMemo(
     () => [
@@ -176,21 +149,6 @@ export function HomePage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {featureHighlights.map((item) => (
-                <div
-                  key={item.title}
-                  className="relative border border-green-500/10 bg-white/5 rounded-xl p-5 hover:border-green-500/40 transition-all duration-300 glass-card"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="p-2 rounded-lg bg-green-500/10 text-green-400">{item.icon}</div>
-                    <span className="text-[11px] px-2 py-1 rounded-full bg-green-500/15 text-green-400 font-semibold">{item.accent}</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-zinc-50 mb-1">{item.title}</h3>
-                  <p className="text-sm text-zinc-400 leading-relaxed">{item.description}</p>
-                </div>
-              ))}
-            </div>
           </div>
 
           <div className="relative">
