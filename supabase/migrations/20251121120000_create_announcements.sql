@@ -24,6 +24,12 @@ CREATE POLICY "Anyone can view published announcements"
   ON announcements FOR SELECT
   USING (published = true AND publish_at <= now());
 
+-- Authenticated admins can view all announcements (including drafts and scheduled)
+CREATE POLICY "Authenticated users can view all announcements"
+  ON announcements FOR SELECT
+  TO authenticated
+  USING (auth.role() = 'authenticated');
+
 -- Authenticated admins can create announcements
 CREATE POLICY "Authenticated users can create announcements"
   ON announcements FOR INSERT
