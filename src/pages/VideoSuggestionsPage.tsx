@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Lightbulb, ThumbsUp, Send, CheckCircle } from 'lucide-react';
+import { Lightbulb, ThumbsUp, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface VideoSuggestion {
   id: string;
@@ -13,10 +14,12 @@ interface VideoSuggestion {
 }
 
 export function VideoSuggestionsPage() {
+  const { error: showError, success: pushSuccess } = useNotification();
   const [suggestions, setSuggestions] = useState<VideoSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -29,56 +32,97 @@ export function VideoSuggestionsPage() {
 
   async function loadSuggestions() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('video_suggestions')
-      .select('id, title, description, submitter_name, status, votes, created_at')
-      .order('votes', { ascending: false })
-      .order('created_at', { ascending: false });
+    setErrorMessage(null);
 
-    if (!error && data) {
-      setSuggestions(data);
+    try {
+      const { data, error } = await supabase
+        .from('video_suggestions')
+        .select('id, title, description, submitter_name, status, votes, created_at')
+        .order('votes', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw Object.assign(error, { code: 'VS-LOAD-01' });
+      }
+
+      setSuggestions(data ?? []);
+    } catch (err: any) {
+      const code = err?.code || 'VS-LOAD-UNKNOWN';
+      const message = 'Öneriler yüklenirken bir sorun oluştu. Lütfen yeniden deneyin.';
+      setErrorMessage(`${message} (Hata kodu: ${code})`);
+      showError(`${message} (Hata kodu: ${code})`);
+      console.error('Video suggestions load error', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!formData.title.trim() || !formData.description.trim()) {
+      const code = 'VS-VALIDATION-01';
+      const message = 'Lütfen zorunlu alanları doldurun.';
+      setErrorMessage(`${message} (Hata kodu: ${code})`);
+      showError(`${message} (Hata kodu: ${code})`);
       return;
     }
 
     setSubmitting(true);
 
-    const { error } = await supabase.from('video_suggestions').insert({
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      submitter_name: formData.submitter_name.trim() || null,
-    });
+    try {
+      const { error } = await supabase.from('video_suggestions').insert({
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        submitter_name: formData.submitter_name.trim() || null,
+      });
 
-    setSubmitting(false);
+      if (error) {
+        throw Object.assign(error, { code: 'VS-SUBMIT-01' });
+      }
 
-    if (!error) {
       setFormData({ title: '', description: '', submitter_name: '' });
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 5000);
+      setShowSuccessBanner(true);
+      pushSuccess('Fikriniz başarıyla gönderildi!');
+      setTimeout(() => setShowSuccessBanner(false), 5000);
       loadSuggestions();
+    } catch (err: any) {
+      const code = err?.code || 'VS-SUBMIT-UNKNOWN';
+      const message = 'Fikriniz gönderilirken bir hata oluştu. Lütfen tekrar deneyin.';
+      setErrorMessage(`${message} (Hata kodu: ${code})`);
+      showError(`${message} (Hata kodu: ${code})`);
+      console.error('Video suggestion submit error', err);
+    } finally {
+      setSubmitting(false);
     }
   }
 
   async function handleVote(suggestionId: string, currentVotes: number) {
     const votedKey = `voted_${suggestionId}`;
-    if (localStorage.getItem(votedKey)) {
-      return;
+
+    try {
+      if (localStorage.getItem(votedKey)) {
+        return;
+      }
+
+      const { error } = await supabase
+        .from('video_suggestions')
+        .update({ votes: currentVotes + 1 })
+        .eq('id', suggestionId);
+
+      if (error) {
+        throw Object.assign(error, { code: 'VS-VOTE-01' });
+      }
+
+      localStorage.setItem(votedKey, 'true');
+      loadSuggestions();
+    } catch (err: any) {
+      const code = err?.code || 'VS-VOTE-UNKNOWN';
+      const message = 'Oy verilirken bir hata oluştu. Lütfen tekrar deneyin.';
+      setErrorMessage(`${message} (Hata kodu: ${code})`);
+      showError(`${message} (Hata kodu: ${code})`);
+      console.error('Video suggestion vote error', err);
     }
-
-    await supabase
-      .from('video_suggestions')
-      .update({ votes: currentVotes + 1 })
-      .eq('id', suggestionId);
-
-    localStorage.setItem(votedKey, 'true');
-    loadSuggestions();
   }
 
   function hasVoted(suggestionId: string): boolean {
@@ -103,7 +147,7 @@ export function VideoSuggestionsPage() {
 
   return (
     <div className="min-h-screen pt-24 pb-20">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="mb-12 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500/10 rounded-2xl mb-6">
             <Lightbulb className="w-8 h-8 text-green-500" />
@@ -117,7 +161,18 @@ export function VideoSuggestionsPage() {
           </p>
         </div>
 
-        {showSuccess && (
+        {errorMessage && (
+          <div
+            className="flex items-start space-x-3 rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-red-200"
+            role="alert"
+            aria-live="assertive"
+          >
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <p className="text-sm leading-relaxed">{errorMessage}</p>
+          </div>
+        )}
+
+        {showSuccessBanner && (
           <div className="mb-8 p-4 bg-green-500/10 border border-green-500/30 rounded-lg flex items-center space-x-3 animate-[fadeIn_0.3s_ease-out]">
             <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
             <p className="text-green-400 font-medium">
@@ -126,10 +181,19 @@ export function VideoSuggestionsPage() {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-8 mb-16">
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8">
-            <h2 className="text-2xl font-bold text-zinc-100 mb-6">Yeni Fikir Gönder</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 mb-4">
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 sm:p-8 shadow-lg">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h2 className="text-2xl font-bold text-zinc-100 mb-2">Yeni Fikir Gönder</h2>
+                <p className="text-zinc-400 text-sm sm:text-base">
+                  Temel bilgileri doldurun, geri kalanını biz hallederiz.
+                </p>
+              </div>
+              <span className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-300">Adım 1</span>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6 mt-6">
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-zinc-300 mb-2">
                   Video Başlığı *
@@ -190,41 +254,44 @@ export function VideoSuggestionsPage() {
             </form>
           </div>
 
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8">
-            <h2 className="text-2xl font-bold text-zinc-100 mb-6">Nasıl Çalışır?</h2>
-            <div className="space-y-6">
-              <div className="flex space-x-4">
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 sm:p-8 shadow-lg">
+            <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+              <h2 className="text-2xl font-bold text-zinc-100">Nasıl Çalışır?</h2>
+              <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-200">Hızlı rehber</span>
+            </div>
+            <div className="space-y-6 divide-y divide-zinc-800">
+              <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0 pt-1">
                 <div className="flex-shrink-0 w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 font-bold">
                   1
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-zinc-100 mb-2">Fikrinizi Paylaşın</h3>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-semibold text-zinc-100">Fikrinizi Paylaşın</h3>
                   <p className="text-zinc-400 text-sm">
-                    Görmek istediğiniz projeyi detaylı bir şekilde anlatın.
+                    Başlığı ve kısa açıklamayı yazın, ister isminizi ekleyin ister anonim kalın.
                   </p>
                 </div>
               </div>
 
-              <div className="flex space-x-4">
+              <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0 pt-4">
                 <div className="flex-shrink-0 w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 font-bold">
                   2
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-zinc-100 mb-2">Topluluk Oylasın</h3>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-semibold text-zinc-100">Topluluk Oylasın</h3>
                   <p className="text-zinc-400 text-sm">
-                    Diğer izleyiciler beğendikleri fikirlere oy verebilir.
+                    Oy butonuna tek dokunuşla destek verin. Her cihazdan yalnızca bir oy kaydedilir.
                   </p>
                 </div>
               </div>
 
-              <div className="flex space-x-4">
+              <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0 pt-4">
                 <div className="flex-shrink-0 w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center text-green-500 font-bold">
                   3
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-zinc-100 mb-2">Video Yapılsın</h3>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-semibold text-zinc-100">Video Yapılsın</h3>
                   <p className="text-zinc-400 text-sm">
-                    En çok oy alan fikirler video olarak hazırlanır.
+                    En çok oy alan fikirler önce çekim planına eklenir. Sonuçları burada takip edin.
                   </p>
                 </div>
               </div>
@@ -253,23 +320,27 @@ export function VideoSuggestionsPage() {
                   key={suggestion.id}
                   className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 hover:border-green-500/30 transition-all duration-300"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-zinc-100 mb-2">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
+                    <div className="flex-1 space-y-3">
+                      <h3 className="text-xl font-semibold text-zinc-100 leading-snug">
                         {suggestion.title}
                       </h3>
-                      <p className="text-zinc-400 text-sm mb-3">{suggestion.description}</p>
-                      <div className="flex items-center space-x-4 text-xs text-zinc-500">
+                      <p className="text-zinc-400 text-sm leading-relaxed">{suggestion.description}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
                         {suggestion.submitter_name && (
-                          <span>Öneren: {suggestion.submitter_name}</span>
+                          <span className="rounded-full bg-zinc-800 px-2 py-1">
+                            Öneren: {suggestion.submitter_name}
+                          </span>
                         )}
-                        <span>{new Date(suggestion.created_at).toLocaleDateString('tr-TR')}</span>
+                        <span className="rounded-full bg-zinc-800 px-2 py-1">
+                          {new Date(suggestion.created_at).toLocaleDateString('tr-TR')}
+                        </span>
                       </div>
                     </div>
-                    <div className="ml-4">{getStatusBadge(suggestion.status)}</div>
+                    <div className="sm:ml-4">{getStatusBadge(suggestion.status)}</div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-3">
                     <button
                       onClick={() => handleVote(suggestion.id, suggestion.votes)}
                       disabled={hasVoted(suggestion.id)}
