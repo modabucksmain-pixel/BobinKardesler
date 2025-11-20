@@ -169,7 +169,7 @@ function getPreferredThumbnail(thumbnails: any): { url: string; width?: number; 
 
 export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeVideo[]> {
   const cached = await getCachedData<YouTubeVideo[]>('latest_videos');
-  if (cached) return cached;
+  if (cached?.length) return cached;
 
   const apiKey = await getYouTubeApiKey();
   const channelId = await getYouTubeChannelId();
@@ -179,7 +179,7 @@ export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeV
 
   if (!apiKey || !channelId) {
     console.error('Missing YouTube credentials');
-    return getMockVideos();
+    return [];
   }
 
   try {
@@ -239,94 +239,14 @@ export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeV
         durationSeconds: parseDurationToSeconds(item.contentDetails?.duration || ''),
       })) || [];
 
-    const filteredVideos = videos.filter((video) => {
-      const title = video.title.toLowerCase();
-      const description = video.description.toLowerCase();
-      const looksLikeShort =
-        title.includes('#short') ||
-        title.includes('shorts') ||
-        title.includes('short ') ||
-        description.includes('#short') ||
-        description.includes('shorts');
-      const durationSeconds = video.durationSeconds || 0;
-      const isTooShort = durationSeconds > 0 && durationSeconds < 120;
-      const isVerticalFormat = video.isVertical === true;
-
-      return !looksLikeShort && !isTooShort && !isVerticalFormat;
-    });
-
-    await setCachedData('latest_videos', filteredVideos);
-    return filteredVideos;
+    await setCachedData('latest_videos', videos);
+    return videos;
   } catch (error) {
     console.error('Error fetching videos:', error);
-    return getMockVideos();
+    return [];
   }
 }
 
-function getMockVideos(): YouTubeVideo[] {
-  return [
-    {
-      id: 'dQw4w9WgXcQ',
-      title: 'Arduino ile LED Kontrolü - Başlangıç Projesi',
-      description: 'Arduino kullanarak basit LED kontrolü yapıyoruz. Yeni başlayanlar için mükemmel bir proje!',
-      thumbnail: 'https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750',
-      publishedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      viewCount: '15420',
-      likeCount: '892',
-      commentCount: '143',
-    },
-    {
-      id: 'dQw4w9WgXcQ',
-      title: 'ESP32 WiFi Modülü Kurulumu ve Kullanımı',
-      description: 'ESP32 modülü ile WiFi bağlantısı kurma ve basit web server oluşturma.',
-      thumbnail: 'https://images.pexels.com/photos/163100/circuit-circuit-board-resistor-computer-163100.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750',
-      publishedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      viewCount: '23100',
-      likeCount: '1240',
-      commentCount: '201',
-    },
-    {
-      id: 'dQw4w9WgXcQ',
-      title: 'Raspberry Pi ile Akıllı Ev Sistemi',
-      description: 'Raspberry Pi kullanarak kendi akıllı ev sisteminizi nasıl yapabilirsiniz?',
-      thumbnail: 'https://images.pexels.com/photos/442150/pexels-photo-442150.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750',
-      publishedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      viewCount: '31500',
-      likeCount: '1680',
-      commentCount: '287',
-    },
-    {
-      id: 'dQw4w9WgXcQ',
-      title: '3D Yazıcı Kalibrasyonu - Kusursuz Baskı İçin',
-      description: '3D yazıcınızı doğru kalibre ederek en iyi sonuçları nasıl alırsınız?',
-      thumbnail: 'https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750',
-      publishedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-      viewCount: '18900',
-      likeCount: '1050',
-      commentCount: '178',
-    },
-    {
-      id: 'dQw4w9WgXcQ',
-      title: 'PCB Tasarımı - KiCad ile Başlangıç',
-      description: 'KiCad kullanarak kendi PCB tasarımlarınızı oluşturun.',
-      thumbnail: 'https://images.pexels.com/photos/5717971/pexels-photo-5717971.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750',
-      publishedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-      viewCount: '12600',
-      likeCount: '720',
-      commentCount: '94',
-    },
-    {
-      id: 'dQw4w9WgXcQ',
-      title: 'Robot Kol Yapımı - Step by Step',
-      description: 'Servo motorlar kullanarak fonksiyonel bir robot kol tasarlıyoruz.',
-      thumbnail: 'https://images.pexels.com/photos/2599244/pexels-photo-2599244.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750',
-      publishedAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
-      viewCount: '27300',
-      likeCount: '1520',
-      commentCount: '235',
-    },
-  ];
-}
 
 export function formatNumber(num: string): string {
   const n = parseInt(num, 10);
