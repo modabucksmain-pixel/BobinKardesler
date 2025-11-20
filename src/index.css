@@ -30,6 +30,23 @@
   .accent-gradient {
     background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   }
+
+  .grid-overlay {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+
+  .aurora {
+    background: radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.08), transparent 25%),
+      radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.08), transparent 25%),
+      radial-gradient(circle at 50% 80%, rgba(34, 197, 94, 0.06), transparent 30%);
+  }
+
+  .glass-card {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
 }
 
 .animate-float {
@@ -123,4 +140,50 @@
   background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.1), transparent);
   background-size: 1000px 100%;
   animation: shimmer 2s infinite;
+}
+
+.animate-aurora {
+  animation: aurora 16s ease infinite;
+}
+
+@keyframes aurora {
+  0% {
+    transform: translateX(-10%) rotate(0deg);
+  }
+  50% {
+    transform: translateX(10%) rotate(5deg);
+  }
+  100% {
+    transform: translateX(-10%) rotate(0deg);
+  }
+}
+
+.animate-glow-loop {
+  animation: glow-loop 8s ease-in-out infinite;
+}
+
+@keyframes glow-loop {
+  0%,
+  100% {
+    opacity: 0.5;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.18);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 0 25px rgba(34, 197, 94, 0);
+  }
+}
+
+.animate-line-flow {
+  background-size: 200% 200%;
+  animation: line-flow 10s linear infinite;
+}
+
+@keyframes line-flow {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
 }
