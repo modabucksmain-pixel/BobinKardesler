@@ -13,6 +13,42 @@ interface BlogPost {
   published_at: string;
 }
 
+const featurePillars = [
+  {
+    title: 'Hızlı Başlangıç Atölyeleri',
+    description: 'Elektrik ve elektronik temelinde uygulamalı mini atölyelerle adım adım ilerleyin.',
+    badge: 'Yeni',
+  },
+  {
+    title: 'Topluluk Mücadeleleri',
+    description: 'Aylık proje görevleriyle becerilerinizi sınayın, ödülleri ve öne çıkmayı kazanın.',
+    badge: 'Haftalık',
+  },
+  {
+    title: 'Canlı Laboratuvar Akışı',
+    description: 'Devam eden projeleri canlı olarak takip edin, sorular sorun ve birlikte çözelim.',
+    badge: 'Canlı',
+  },
+];
+
+const discoveryCards = [
+  {
+    title: 'Arduino & Mikrodenetleyici Paketi',
+    description: 'Başlangıç seviyesinden ileri seviyeye ilerleyen pratik, kaynak ve koda hazır paket.',
+    href: '/projeler',
+  },
+  {
+    title: 'Yeraltı Enerji Serisi',
+    description: 'Endüstriyel enerji çözümlerini gerçek örneklerle anlattığımız özel video serisi.',
+    href: '/videos',
+  },
+  {
+    title: 'Topluluk Vitrini',
+    description: 'Abonelerden gelen en yaratıcı proje paylaşımlarını haftalık olarak yayınlıyoruz.',
+    href: '/topluluk',
+  },
+];
+
 export function HomePage() {
   const [stats, setStats] = useState<ChannelStats | null>(null);
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
@@ -103,6 +139,27 @@ export function HomePage() {
         </div>
       </section>
 
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {featurePillars.map((pillar, index) => (
+            <div
+              key={pillar.title}
+              className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-6 hover:border-green-500/40 transition-all duration-300 hover:-translate-y-1"
+              style={{ animationDelay: `${index * 120}ms` }}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-500/10 text-green-400 border border-green-500/30">
+                  {pillar.badge}
+                </span>
+                <p className="text-sm text-zinc-500">Yeni özellik</p>
+              </div>
+              <h3 className="text-xl font-semibold text-zinc-100 mb-2">{pillar.title}</h3>
+              <p className="text-zinc-400 text-sm leading-relaxed">{pillar.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {announcements.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="flex items-center justify-between mb-10">
@@ -146,6 +203,45 @@ export function HomePage() {
           </div>
         </section>
       )}
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
+          <div>
+            <p className="text-sm text-green-400 font-semibold mb-2">Yeni Keşif Alanı</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-100 mb-2">Koleksiyonlarımız</h2>
+            <p className="text-zinc-500 text-sm md:text-base max-w-2xl">
+              Bobin Kardeşler ekibinin elinden çıkan seçili koleksiyonlarla becerilerinizi pekiştirin. Her biri uygulamaya
+              dönük içerik, kaynak ve hazır kodlarla dolu.
+            </p>
+          </div>
+          <a href="/projeler" className="text-green-500 hover:text-green-400 text-sm font-semibold">
+            Projeleri incele →
+          </a>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {discoveryCards.map((card, index) => (
+            <a
+              key={card.title}
+              href={card.href}
+              className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-6 hover:border-green-500/50 transition-all duration-300 hover:-translate-y-1 block"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/30">
+                  Sürüm {index + 1}.0
+                </span>
+                <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center text-green-400 font-semibold">
+                  {index + 1}
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-zinc-100 mb-2">{card.title}</h3>
+              <p className="text-zinc-400 text-sm leading-relaxed mb-3">{card.description}</p>
+              <span className="text-green-400 text-sm font-semibold">İncele →</span>
+            </a>
+          ))}
+        </div>
+      </section>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="flex items-center justify-between mb-12">
