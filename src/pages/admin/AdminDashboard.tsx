@@ -24,6 +24,10 @@ export function AdminDashboard() {
   const [blogCount, setBlogCount] = useState(0);
   const [totalViews, setTotalViews] = useState(0);
   const [suggestionsCount, setSuggestionsCount] = useState(0);
+  const [announcementCount, setAnnouncementCount] = useState(0);
+  const [projectCount, setProjectCount] = useState(0);
+  const [pollCount, setPollCount] = useState(0);
+  const [newsletterCount, setNewsletterCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,17 +42,34 @@ export function AdminDashboard() {
 
   async function loadStats() {
     setLoading(true);
-    const [channelStats, blogData, viewsData, suggestionsData] = await Promise.all([
+    const [
+      channelStats,
+      blogData,
+      viewsData,
+      suggestionsData,
+      announcementData,
+      projectData,
+      pollData,
+      newsletterData,
+    ] = await Promise.all([
       getChannelStats(),
       supabase.from('blog_posts').select('id', { count: 'exact', head: true }),
       supabase.from('blog_posts').select('views'),
       supabase.from('video_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('announcements').select('id', { count: 'exact', head: true }),
+      supabase.from('projects').select('id', { count: 'exact', head: true }),
+      supabase.from('polls').select('id', { count: 'exact', head: true }),
+      supabase.from('newsletter_signups').select('id', { count: 'exact', head: true }),
     ]);
 
     setStats(channelStats);
     setBlogCount(blogData.count || 0);
     setTotalViews(viewsData.data?.reduce((sum, post) => sum + post.views, 0) || 0);
     setSuggestionsCount(suggestionsData.count || 0);
+    setAnnouncementCount(announcementData.count || 0);
+    setProjectCount(projectData.count || 0);
+    setPollCount(pollData.count || 0);
+    setNewsletterCount(newsletterData.count || 0);
     setLoading(false);
   }
 
@@ -68,7 +89,7 @@ export function AdminDashboard() {
     >
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(9)].map((_, i) => (
             <div key={i} className="animate-pulse bg-white/5 border border-white/5 rounded-2xl h-32" />
           ))}
         </div>
@@ -102,6 +123,30 @@ export function AdminDashboard() {
             icon={<Lightbulb className="w-6 h-6" />}
             label="Bekleyen Öneriler"
             value={suggestionsCount.toString()}
+            color="green"
+          />
+          <StatCard
+            icon={<Bell className="w-6 h-6" />}
+            label="Duyurular"
+            value={announcementCount.toString()}
+            color="green"
+          />
+          <StatCard
+            icon={<Wrench className="w-6 h-6" />}
+            label="Projeler"
+            value={projectCount.toString()}
+            color="yellow"
+          />
+          <StatCard
+            icon={<BarChart3 className="w-6 h-6" />}
+            label="Anketler"
+            value={pollCount.toString()}
+            color="yellow"
+          />
+          <StatCard
+            icon={<Mail className="w-6 h-6" />}
+            label="Bülten Kayıtları"
+            value={newsletterCount.toString()}
             color="green"
           />
         </div>

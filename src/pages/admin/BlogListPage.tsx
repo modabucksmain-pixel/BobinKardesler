@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { FileText, Edit, Trash2, Eye, Calendar, Plus, ArrowLeft } from 'lucide-react';
 import { formatDate } from '../../lib/youtube';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface BlogPost {
   id: string;
@@ -15,8 +16,11 @@ interface BlogPost {
 
 export function BlogListPage() {
   const { user, loading: authLoading } = useAuth();
+  const { success, error: showError } = useNotification();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -30,12 +34,16 @@ export function BlogListPage() {
 
   async function loadPosts() {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('blog_posts')
       .select('id, title, slug, status, published_at, views')
       .order('created_at', { ascending: false });
 
-    if (data) setPosts(data);
+    if (error) {
+      showError('Blog yazıları yüklenemedi: ' + error.message);
+    } else if (data) {
+      setPosts(data);
+    }
     setLoading(false);
   }
 
@@ -44,10 +52,42 @@ export function BlogListPage() {
 
     const { error } = await supabase.from('blog_posts').delete().eq('id', id);
 
-    if (!error) {
-      setPosts(posts.filter((post) => post.id !== id));
+    if (error) {
+      showError('Yazı silinemedi: ' + error.message);
+      return;
     }
+
+    setPosts(posts.filter((post) => post.id !== id));
+    success('Yazı silindi');
   }
+
+  async function togglePublish(post: BlogPost) {
+    const newStatus = post.status === 'published' ? 'draft' : 'published';
+    const { error } = await supabase
+      .from('blog_posts')
+      .update({
+        status: newStatus,
+        published_at: newStatus === 'published' ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', post.id);
+
+    if (error) {
+      showError('Yayın durumu güncellenemedi: ' + error.message);
+      return;
+    }
+
+    setPosts((prev) => prev.map((p) => (p.id === post.id ? { ...p, status: newStatus } : p)));
+    success(newStatus === 'published' ? 'Yazı yayına alındı' : 'Yazı taslağa çekildi');
+  }
+
+  const filteredPosts = useMemo(() => {
+    return posts.filter((post) => {
+      const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' ? true : post.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [posts, searchTerm, statusFilter]);
 
   if (authLoading || !user) {
     return (
@@ -82,6 +122,47 @@ export function BlogListPage() {
               <span>Yeni Yazı</span>
             </a>
           </div>
+
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2 flex flex-wrap gap-3">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Başlıkta ara..."
+                className="flex-1 min-w-[220px] px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:border-green-500 text-zinc-100"
+              />
+              <div className="flex items-center gap-2">
+                {(
+                  [
+                    { label: 'Tümü', value: 'all' },
+                    { label: 'Yayında', value: 'published' },
+                    { label: 'Taslak', value: 'draft' },
+                  ] as const
+                ).map((filter) => (
+                  <button
+                    key={filter.value}
+                    onClick={() => setStatusFilter(filter.value)}
+                    className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      statusFilter === filter.value
+                        ? 'bg-green-500 text-zinc-950 border-green-400'
+                        : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-green-400/40'
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 text-sm text-zinc-400">
+              <div className="px-3 py-2 rounded-lg bg-zinc-900/60 border border-zinc-800">
+                Toplam: {posts.length}
+              </div>
+              <div className="px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-300">
+                Filtreli: {filteredPosts.length}
+              </div>
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -90,7 +171,7 @@ export function BlogListPage() {
               <div key={i} className="animate-pulse bg-zinc-800 rounded-lg p-6 h-24"></div>
             ))}
           </div>
-        ) : posts.length === 0 ? (
+        ) : filteredPosts.length === 0 ? (
           <div className="text-center py-20 bg-zinc-900/50 border border-zinc-800 rounded-lg">
             <FileText className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
             <p className="text-zinc-400 text-lg mb-4">Henüz blog yazısı yok</p>
@@ -104,7 +185,7 @@ export function BlogListPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {posts.map((post) => (
+            {filteredPosts.map((post) => (
               <div
                 key={post.id}
                 className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 hover:border-green-500/40 transition-all duration-300"
@@ -139,12 +220,19 @@ export function BlogListPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <a
-                      href={`/admin/blog/${post.id}`}
-                      className="p-2 text-zinc-400 hover:text-green-500 transition-colors"
-                      title="Düzenle"
-                    >
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => togglePublish(post)}
+                    className="p-2 text-zinc-400 hover:text-green-500 transition-colors"
+                    title={post.status === 'published' ? 'Taslağa çek' : 'Yayınla'}
+                  >
+                    {post.status === 'published' ? 'Taslağa Al' : 'Yayınla'}
+                  </button>
+                  <a
+                    href={`/admin/blog/${post.id}`}
+                    className="p-2 text-zinc-400 hover:text-green-500 transition-colors"
+                    title="Düzenle"
+                  >
                       <Edit className="w-5 h-5" />
                     </a>
                     <button
