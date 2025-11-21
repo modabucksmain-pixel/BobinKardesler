@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAllSubscribers, type NewsletterSubscriber } from '../../lib/newsletter';
-import { Mail, ArrowLeft, Download, Users } from 'lucide-react';
+import { Mail, ArrowLeft, Download, Users, Copy, Send } from 'lucide-react';
 
 export function NewsletterAdminPage() {
   const { user, loading: authLoading } = useAuth();
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -23,6 +24,21 @@ export function NewsletterAdminPage() {
     const data = await getAllSubscribers();
     setSubscribers(data);
     setLoading(false);
+  }
+
+  const subscriberEmails = subscribers.map(sub => sub.email).join(', ');
+
+  async function copyEmails() {
+    if (!subscriberEmails) return;
+
+    try {
+      await navigator.clipboard.writeText(subscriberEmails);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy emails', error);
+      setCopied(false);
+    }
   }
 
   function exportToCSV() {
@@ -78,17 +94,38 @@ export function NewsletterAdminPage() {
           </div>
         </div>
 
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="p-4 bg-green-500/10 rounded-lg">
-              <Users className="w-8 h-8 text-green-500" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-zinc-100">{subscribers.length}</p>
-              <p className="text-zinc-400">Toplam Abone</p>
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="p-4 bg-green-500/10 rounded-lg">
+                  <Users className="w-8 h-8 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-zinc-100">{subscribers.length}</p>
+                  <p className="text-zinc-400">Toplam Abone</p>
+                </div>
+              </div>
+
+              {subscribers.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-auto">
+                  <button
+                    onClick={copyEmails}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-green-500/30 px-4 py-2 text-sm font-semibold text-green-200 hover:bg-green-500/10 transition-colors"
+                  >
+                    <Copy className="w-4 h-4" />
+                    {copied ? 'Kopyalandı' : 'Adresleri Kopyala'}
+                  </button>
+                  <a
+                    href={`mailto:?bcc=${encodeURIComponent(subscriberEmails)}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-green-400 transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                    Toplu Mail Başlat
+                  </a>
+                </div>
+              )}
             </div>
           </div>
-        </div>
 
         {loading ? (
           <div className="space-y-4">

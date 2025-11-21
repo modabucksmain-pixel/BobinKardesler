@@ -91,46 +91,39 @@ export function HomePage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <div className="absolute inset-0 electric-gradient grid-overlay opacity-60"></div>
-      <div className="absolute inset-0 aurora animate-aurora"></div>
+    <div className="min-h-screen bg-zinc-950">
 
-      <section className="relative min-h-screen flex items-center overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -left-10 -top-20 w-64 h-64 rounded-full bg-green-500/20 blur-3xl animate-glow-loop"></div>
-          <div className="absolute right-10 top-16 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl animate-glow-loop"></div>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.04),_transparent_45%)]"></div>
-        </div>
+      <section className="relative py-16 lg:py-24">
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black" />
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-          <div className="space-y-8">
-            <div className="inline-flex items-center space-x-3 bg-white/5 border border-white/10 rounded-full px-4 py-2 backdrop-blur-sm">
+          <div className="space-y-6">
+            <div className="inline-flex items-center space-x-3 bg-white/5 border border-white/10 rounded-full px-4 py-2">
               <Sparkles className="w-4 h-4 text-green-400" />
-              <span className="text-xs uppercase tracking-[0.25em] text-zinc-300">Elektrik & Teknoloji Üssü</span>
+              <span className="text-xs uppercase tracking-[0.18em] text-zinc-300">Elektrik & Teknoloji Üssü</span>
             </div>
 
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
-                <span className="text-zinc-50">Bobin</span>{' '}
-                <span className="text-green-400 glow-text">Kardeşler</span>
-                <span className="block text-2xl sm:text-3xl text-zinc-300 mt-3 font-semibold">Underground Elektrik & Maker Platformu</span>
+            <div className="space-y-3">
+              <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight text-white">
+                Bobin <span className="text-green-400 glow-text">Kardeşler</span>
+                <span className="block text-xl sm:text-2xl text-zinc-300 mt-2 font-semibold">Underground Elektrik & Maker Platformu</span>
               </h1>
-              <p className="text-zinc-400 text-lg leading-relaxed">
-                Atölyeden yükselen enerjiyle devreler, projeler ve eğitim içerikleri. Videolar, şemalar ve topluluk etkinlikleri artık tek ekranda.
+              <p className="text-zinc-400 text-base sm:text-lg leading-relaxed max-w-2xl">
+                Daha yalın bir vitrin ile videoları, projeleri ve topluluk duyurularını hızlıca keşfet. Mobil ve masaüstü için optimize edildi.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <a
                 href="/videos"
-                className="inline-flex items-center px-6 py-3 rounded-lg bg-green-500 text-zinc-950 font-semibold shadow-lg shadow-green-500/30 hover:-translate-y-1 transition-transform duration-300"
+                className="inline-flex items-center px-5 py-3 rounded-lg bg-green-500 text-zinc-950 font-semibold shadow-lg shadow-green-500/30 hover:-translate-y-0.5 transition-transform"
               >
                 <Play className="w-5 h-5 mr-2" />
                 Videoları İzle
               </a>
               <a
                 href="/projeler"
-                className="inline-flex items-center px-6 py-3 rounded-lg border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors duration-300"
+                className="inline-flex items-center px-5 py-3 rounded-lg border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors"
               >
                 <ArrowUpRight className="w-5 h-5 mr-2" />
                 Projeleri Keşfet
@@ -151,12 +144,10 @@ export function HomePage() {
 
           </div>
 
-          <div className="relative">
-            <div className="absolute -inset-10 bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/20 rounded-3xl blur-3xl"></div>
-            <div className="relative bg-zinc-950/70 border border-zinc-800 rounded-3xl p-6 lg:p-8 shadow-2xl glass-card">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400">
+          <div className="relative bg-zinc-950/70 border border-zinc-800 rounded-3xl p-6 lg:p-8 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400">
                     <Waves className="w-5 h-5" />
                   </div>
                   <div>
@@ -212,7 +203,6 @@ export function HomePage() {
               </div>
             </div>
           </div>
-        </div>
       </section>
 
       {communityPosts.length > 0 && (
