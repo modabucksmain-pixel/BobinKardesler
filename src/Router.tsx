@@ -25,6 +25,7 @@ import { ProjectsAdminPage } from './pages/admin/ProjectsAdminPage';
 import { PollsAdminPage } from './pages/admin/PollsAdminPage';
 import { NewsletterAdminPage } from './pages/admin/NewsletterAdminPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
+import { ForumAdminPage } from './pages/admin/ForumAdminPage';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ForumLandingPage } from './pages/forum/ForumLandingPage';
@@ -135,6 +136,8 @@ export function Router() {
     content = <ProjectsAdminPage />;
   } else if (path === '/admin/polls') {
     content = <PollsAdminPage />;
+  } else if (path === '/admin/forum') {
+    content = <ForumAdminPage />;
   } else if (path === '/admin/newsletter') {
     content = <NewsletterAdminPage />;
   } else if (path === '/admin/settings') {
