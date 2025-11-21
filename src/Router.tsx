@@ -80,7 +80,7 @@ export function Router() {
     content = <PollsPage />;
   } else if (path === '/forum') {
     content = <ForumLandingPage />;
-  } else if (path === '/forum/son-konular') {
+  } else if (path === '/forum/son-konular' || path === '/forum/konu/cevapsiz') {
     content = <ForumLatestPage />;
   } else if (path.startsWith('/forum/konu/')) {
     const slugAndId = decodeURIComponent(path.replace('/forum/konu/', ''));

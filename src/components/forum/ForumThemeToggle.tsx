@@ -21,7 +21,11 @@ export function ForumThemeToggle() {
   return (
     <button
       onClick={() => setMode((prev) => (prev === 'dark' ? 'light' : 'dark'))}
-      className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white hover:border-green-400/50 hover:text-green-100"
+      className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold shadow-sm transition ${
+        mode === 'dark'
+          ? 'border-white/20 bg-white/10 text-white hover:border-emerald-300/60 hover:text-emerald-100'
+          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+      }`}
       aria-label="Tema değiştir"
     >
       {mode === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
