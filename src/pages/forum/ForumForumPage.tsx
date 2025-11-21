@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BadgeCheck, CheckCircle2, Filter, Flag, Send, Tag, Timer } from 'lucide-react';
+import { BadgeCheck, CheckCircle2, Eye, Filter, Flag, Send, Tag, Timer, TrendingUp } from 'lucide-react';
+import { ForumThemeToggle } from '../../components/forum/ForumThemeToggle';
 import {
   buildThreadPath,
   createForumThread,
@@ -26,12 +27,14 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ForumStatus | 'all'>('all');
+  const [sort, setSort] = useState<'last_activity_at' | 'created_at' | 'reply_count' | 'view_count'>('last_activity_at');
   const [searchTerm, setSearchTerm] = useState('');
   const [tagsInput, setTagsInput] = useState('');
   const [titleInput, setTitleInput] = useState('');
   const [bodyInput, setBodyInput] = useState('');
 
   useEffect(() => {
+    document.body.dataset.forumTheme = (localStorage.getItem('bk-forum-theme') as 'dark' | 'light' | null) ?? 'dark';
     loadForum();
   }, [categorySlug, forumSlug]);
 
@@ -67,8 +70,14 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
         searchTerm
           ? `${thread.title} ${thread.body} ${thread.tags.join(' ')}`.toLowerCase().includes(searchTerm.toLowerCase())
           : true
-      );
-  }, [threads, statusFilter, searchTerm]);
+      )
+      .sort((a, b) => {
+        if (sort === 'created_at') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        if (sort === 'reply_count') return (b.reply_count ?? 0) - (a.reply_count ?? 0);
+        if (sort === 'view_count') return (b.view_count ?? 0) - (a.view_count ?? 0);
+        return new Date(b.last_activity_at).getTime() - new Date(a.last_activity_at).getTime();
+      });
+  }, [threads, statusFilter, searchTerm, sort]);
 
   const availableTags = useMemo(() => Array.from(new Set(threads.flatMap((thread) => thread.tags))).slice(0, 12), [threads]);
 
@@ -163,14 +172,17 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
           <span className="text-white font-semibold">{forum?.name || forumSlug}</span>
         </div>
 
-        <div className="rounded-2xl border border-green-500/20 bg-zinc-900/60 p-6 shadow-xl">
+        <div className="forum-card rounded-2xl border border-green-500/20 bg-zinc-900/60 p-6 shadow-xl">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div className="space-y-2">
               <h1 className="text-3xl font-black text-white">{forum?.name || 'Forum'}</h1>
-              <p className="text-zinc-300">{forum?.description || 'Alt forum detayları yükleniyor.'}</p>
+              <p className="forum-muted">{forum?.description || 'Alt forum detayları yükleniyor.'}</p>
             </div>
-            <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${isGoogleLinked ? 'bg-green-500/15 text-green-200 border-green-500/40' : 'bg-amber-500/10 text-amber-200 border-amber-500/30'}`}>
-              {isGoogleLinked ? 'Google bağlı' : 'Google bağla'}
+            <div className="flex items-center gap-3">
+              <ForumThemeToggle />
+              <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${isGoogleLinked ? 'bg-green-500/15 text-green-200 border-green-500/40' : 'bg-amber-500/10 text-amber-200 border-amber-500/30'}`}>
+                {isGoogleLinked ? 'Google bağlı' : 'Google bağla'}
+              </div>
             </div>
           </div>
         </div>
@@ -181,14 +193,14 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
 
         <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-6 items-start">
           <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div className="forum-card rounded-2xl border border-white/10 bg-white/5 p-5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div className="space-y-1">
                   <h2 className="text-xl font-bold text-white flex items-center gap-2">
                     <Filter className="w-5 h-5 text-green-400" />
                     Konu filtreleri
                   </h2>
-                  <p className="text-sm text-zinc-400">Duruma göre filtrele veya başlıklarda ara.</p>
+                  <p className="text-sm forum-muted">Duruma göre filtrele veya başlıklarda ara.</p>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-zinc-200">{threads.length} konu</span>
@@ -226,10 +238,33 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
                 </div>
               </div>
 
+              <div className="flex flex-wrap gap-2 text-sm mt-3">
+                {(
+                  [
+                    { value: 'last_activity_at', label: 'Son hareket' },
+                    { value: 'created_at', label: 'Oluşturma tarihi' },
+                    { value: 'reply_count', label: 'En çok cevap' },
+                    { value: 'view_count', label: 'En çok görüntülenme' },
+                  ] as const
+                ).map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setSort(option.value)}
+                    className={`forum-chip px-3 py-2 rounded-xl border text-xs font-semibold ${
+                      sort === option.value
+                        ? 'bg-green-500 text-zinc-950 border-green-400'
+                        : 'bg-white/10 text-white border-white/20'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+
               {availableTags.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-2 text-sm">
                   {availableTags.map((tag) => (
-                    <span key={tag} className="px-3 py-2 rounded-full bg-white/5 text-zinc-200 border border-white/10 flex items-center gap-2">
+                    <span key={tag} className="forum-chip px-3 py-2 rounded-full bg-white/5 text-zinc-200 border border-white/10 flex items-center gap-2">
                       <Tag className="w-4 h-4" />
                       #{tag}
                     </span>
@@ -252,7 +287,7 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
                   <button
                     key={thread.id}
                     onClick={() => navigate(buildThreadPath(thread))}
-                    className="w-full text-left rounded-xl border p-4 transition-all bg-white/5 border-white/5 hover:border-green-400/50 hover:bg-white/10"
+                    className="forum-card w-full text-left rounded-xl border p-4 transition-all bg-white/5 border-white/5 hover:border-green-400/50 hover:bg-white/10"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-2">
@@ -268,12 +303,15 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
                               <BadgeCheck className="w-4 h-4" /> Google bağlı
                             </span>
                           )}
+                          <span className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full bg-white/5 border border-white/10 text-zinc-200">
+                            <TrendingUp className="w-4 h-4" /> {new Date(thread.last_activity_at).toLocaleDateString('tr-TR')}
+                          </span>
                         </div>
                         <h3 className="text-lg font-semibold text-white">{thread.title}</h3>
-                        <p className="text-sm text-zinc-400 line-clamp-2">{thread.body}</p>
+                        <p className="text-sm forum-muted line-clamp-2">{thread.body}</p>
                         <div className="flex flex-wrap gap-2 text-xs">
                           {thread.tags.map((tag) => (
-                            <span key={tag} className="px-2 py-1 rounded-full bg-white/5 text-zinc-200 border border-white/10">
+                            <span key={tag} className="forum-chip px-2 py-1 rounded-full bg-white/5 text-zinc-200 border border-white/10">
                               #{tag}
                             </span>
                           ))}
@@ -281,7 +319,9 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
                       </div>
                       <div className="flex flex-col items-end space-y-2 text-sm text-zinc-400 min-w-[110px]">
                         <span>{thread.reply_count ?? 0} yanıt</span>
-                        <span className="text-xs px-2 py-1 rounded-full bg-white/5 border border-white/10">{thread.view_count} görüntülenme</span>
+                        <span className="text-xs px-2 py-1 rounded-full bg-white/5 border border-white/10 inline-flex items-center gap-1">
+                          <Eye className="w-4 h-4" /> {thread.view_count} görüntülenme
+                        </span>
                       </div>
                     </div>
                   </button>
@@ -290,14 +330,14 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div className="forum-card rounded-2xl border border-white/10 bg-white/5 p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <Send className="w-5 h-5 text-green-400" />
                   Yeni Başlık Aç
                 </h2>
-                <p className="text-sm text-zinc-400">Google doğrulaması olmadan paylaşım yapılamaz.</p>
+                <p className="text-sm forum-muted">Google doğrulaması olmadan paylaşım yapılamaz.</p>
               </div>
               <div className={`px-3 py-1 rounded-full text-xs font-semibold border ${isGoogleLinked ? 'bg-green-500/15 text-green-200 border-green-500/40' : 'bg-amber-500/10 text-amber-200 border-amber-500/30'}`}>
                 {isGoogleLinked ? 'Hazır' : 'Google bağla'}

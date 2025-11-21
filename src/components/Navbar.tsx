@@ -24,9 +24,11 @@ export function Navbar() {
 
   const communityLinks = [
     { href: '/forum', label: 'Forum' },
+    { href: '/forum/son-konular', label: 'Son Konular' },
     { href: '/topluluk', label: 'Topluluk' },
     { href: '/anketler', label: 'Anketler' },
     { href: '/cekilisler', label: 'Çekilişler' },
+    { href: '/account', label: 'Profilim' },
   ];
 
   useEffect(() => {
