@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, BadgeCheck, CheckCircle2, Heart, Lock, MessageCircle, Quote, Send, ShieldCheck, Timer, Flag } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, CheckCircle2, Heart, Lock, MessageCircle, Quote, Send, ShieldCheck, Timer, Flag, Eye } from 'lucide-react';
 import { ForumThemeToggle } from '../../components/forum/ForumThemeToggle';
 import {
   createForumReply,
   getForumReplies,
   getForumThreadById,
+  getSimilarThreads,
   getUserForumRole,
   incrementThreadViewCount,
   markThreadSolved,
+  buildThreadPath,
   type ForumReply,
   type ForumThread,
 } from '../../lib/forum';
@@ -32,6 +34,7 @@ export function ForumThreadPage({ slugAndId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState('');
   const [role, setRole] = useState<'admin' | 'moderator' | 'user'>('user');
+  const [similarThreads, setSimilarThreads] = useState<ForumThread[]>([]);
   const [likes, setLikes] = useState<Record<string, number>>(() => {
     const stored = localStorage.getItem('bk-forum-likes');
     return stored ? JSON.parse(stored) : {};
@@ -63,6 +66,13 @@ export function ForumThreadPage({ slugAndId }: Props) {
     }
 
     setThread(data);
+    setSimilarThreads(
+      getSimilarThreads({
+        forumId: data.forum_id,
+        categoryId: data.category?.id,
+        excludeId: data.id,
+      })
+    );
     setError(null);
     document.title = `${data.title} | Forum`;
     incrementThreadViewCount(threadId);
@@ -164,214 +174,314 @@ export function ForumThreadPage({ slugAndId }: Props) {
   }
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 pb-12 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex items-center gap-2 text-sm text-zinc-300">
-          <button
-            onClick={() => navigate(`/forum/kategori/${thread?.category?.slug || 'kategori'}/${thread?.forum?.slug || 'forum'}`)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:border-green-400/50 text-white"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Foruma dön
-          </button>
-        </div>
-
-        {error && (
-          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-100 text-sm">{error}</div>
-        )}
-
-        <div className="forum-card rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
-          {loadingThread ? (
-            <div className="space-y-3">
-              <div className="h-8 bg-zinc-800/70 rounded-lg animate-pulse" />
-              <div className="h-24 bg-zinc-800/70 rounded-lg animate-pulse" />
-            </div>
-          ) : thread ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/40">
-                  <Timer className="w-4 h-4" /> {thread.status === 'resolved' ? 'Çözüldü' : thread.status === 'in_progress' ? 'Takipte' : 'Açık'}
-                </span>
-                {thread.is_locked && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300">
-                    <Lock className="w-4 h-4" /> Kilitli
-                  </span>
-                )}
-                {thread.google_connected && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-blue-500/10 border border-blue-500/40 text-blue-200">
-                    <BadgeCheck className="w-4 h-4" /> Google bağlı
-                  </span>
-                )}
-                <ForumThemeToggle />
-              </div>
-              <h1 className="text-3xl font-black text-white">{thread.title}</h1>
-              <p className="text-zinc-200 whitespace-pre-line">{thread.body}</p>
-              <div className="flex items-center gap-3 text-sm text-zinc-400">
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 border border-white/10">
-                  <Heart className="w-4 h-4" /> {likes[thread.id] || 12} beğeni
-                </span>
-                <button
-                  onClick={() => handleLike(thread.id)}
-                  className="text-green-300 hover:text-green-100 underline"
-                >
-                  Beğen
-                </button>
-                <button
-                  onClick={() => setQuote(thread.body)}
-                  className="text-green-300 hover:text-green-100 underline inline-flex items-center gap-1"
-                >
-                  <Quote className="w-4 h-4" /> Alıntıla
-                </button>
-                <button onClick={() => notification.info('Raporun alındı, moderasyon ekibine iletildi.')} className="inline-flex items-center gap-1 text-amber-200 hover:text-amber-100">
-                  <Flag className="w-4 h-4" /> Şikayet et
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                {thread.tags.map((tag) => (
-                  <span key={tag} className="px-2 py-1 rounded-full bg-white/5 text-zinc-200 border border-white/10">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-              <div className="text-sm text-zinc-400">Görüntülenme: {thread.view_count}</div>
-            </div>
-          ) : (
-            <div className="text-zinc-300">Konu bulunamadı.</div>
-          )}
-        </div>
-
-        <div className="forum-card rounded-2xl border border-white/10 bg-white/5 p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-green-400" />
-            <p className="text-white font-semibold">Admin çözüm alanı</p>
+    <div className="min-h-screen bg-slate-100">
+      <div className="pt-24 sm:pt-28 pb-14">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
+          <div className="flex items-center justify-between gap-3 text-sm text-slate-700">
+            <button
+              onClick={() => navigate(`/forum/kategori/${thread?.category?.slug || 'kategori'}/${thread?.forum?.slug || 'forum'}`)}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white text-slate-700 border border-slate-200 shadow-sm hover:border-blue-200 hover:text-blue-700"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Foruma dön
+            </button>
+            <ForumThemeToggle />
           </div>
-          <p className="text-sm text-zinc-300">
-            Çözüm işaretleme işlemi Supabase RPC ile sadece admin rolüne açık olacak şekilde tasarlandı. Rol bilgisini user_profiles tablosundan çekiyoruz.
-          </p>
-        </div>
 
-        <div className="space-y-3">
-          {loadingReplies ? (
-            <div className="space-y-2">
-              {[...Array(3)].map((_, idx) => (
-                <div key={idx} className="h-16 bg-zinc-800/70 rounded-xl animate-pulse" />
-              ))}
+          {error && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-800 text-sm">{error}</div>
+          )}
+
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-4 py-2">
+            <div className="flex items-center flex-wrap gap-2 text-sm font-semibold text-slate-700">
+              <a href="#thread" className="px-3 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700">
+                Konu
+              </a>
+              <a href="#replies" className="px-3 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700">
+                Mesajlar
+              </a>
+              <a href="#reply-form" className="px-3 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700">
+                Yanıt Yaz
+              </a>
+              <a href="#similar-topics" className="px-3 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700">
+                Benzer Konular
+              </a>
             </div>
-          ) : replies.length === 0 ? (
-            <div className="text-center text-zinc-400 py-6">Henüz yanıt yok.</div>
-          ) : (
-              replies.map((reply) => (
-                <div
-                  key={reply.id}
-                  className={`rounded-xl border p-4 space-y-2 ${
-                    reply.is_solution
-                      ? 'border-green-500/60 bg-green-500/5'
-                      : reply.is_admin_response
-                        ? 'border-emerald-500/40 bg-emerald-500/5'
-                        : 'border-white/5 bg-white/5'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {reply.is_admin_response ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-emerald-500/15 text-emerald-200 border border-emerald-500/30">
-                          <ShieldCheck className="w-4 h-4" /> Admin yanıtı
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-white/10 text-zinc-200 border border-white/20">
-                          <MessageCircle className="w-4 h-4" /> Kullanıcı yanıtı
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[2fr,1fr] items-start">
+            <div className="space-y-4">
+              <section id="thread" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+                {loadingThread ? (
+                  <div className="space-y-3">
+                    <div className="h-7 bg-slate-200 rounded-lg animate-pulse" />
+                    <div className="h-20 bg-slate-200 rounded-lg animate-pulse" />
+                  </div>
+                ) : thread ? (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                        <Timer className="w-4 h-4" /> {thread.status === 'resolved' ? 'Çözüldü' : thread.status === 'in_progress' ? 'Takipte' : 'Açık'}
+                      </span>
+                      {thread.is_locked && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-slate-600">
+                          <Lock className="w-4 h-4" /> Kilitli
                         </span>
                       )}
-                      {reply.is_solution && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-100 border border-green-400/40">
-                          <CheckCircle2 className="w-4 h-4" /> Çözüm
+                      {thread.google_connected && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
+                          <BadgeCheck className="w-4 h-4" /> Google bağlı
                         </span>
                       )}
+                    </div>
+                    <h1 className="text-3xl font-extrabold text-slate-900">{thread.title}</h1>
+                    <p className="text-slate-800 whitespace-pre-line leading-relaxed">{thread.body}</p>
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 border border-slate-200">
+                        <Heart className="w-4 h-4" /> {likes[thread.id] || 12} beğeni
+                      </span>
                       <button
-                        onClick={() => setQuote(reply.body)}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full bg-white/5 border border-white/10 text-zinc-200 hover:border-green-400/40"
+                        onClick={() => handleLike(thread.id)}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-slate-200 text-blue-700 hover:bg-blue-50"
                       >
-                        <Quote className="w-3 h-3" /> Alıntıla
+                        <Heart className="w-4 h-4" /> Beğen
+                      </button>
+                      <button
+                        onClick={() => setQuote(thread.body)}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-slate-200 text-blue-700 hover:bg-blue-50"
+                      >
+                        <Quote className="w-4 h-4" /> Alıntıla
+                      </button>
+                      <button
+                        onClick={() => notification.info('Raporun alındı, moderasyon ekibine iletildi.')}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50"
+                      >
+                        <Flag className="w-4 h-4" /> Şikayet et
                       </button>
                     </div>
-                    <p className="text-xs text-zinc-400">{formatDate(reply.created_at)}</p>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      {thread.tags.map((tag) => (
+                        <span key={tag} className="px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="text-sm text-slate-600">Görüntülenme: {thread.view_count}</div>
                   </div>
-                  <p className="text-sm text-zinc-200 whitespace-pre-line">{reply.body}</p>
-                  {canModerate && !reply.is_solution && (
-                    <button
-                      onClick={() => handleMarkSolution(reply)}
-                      className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg bg-green-500 text-zinc-950 hover:bg-green-400 transition"
+                ) : (
+                  <div className="text-slate-600">Konu bulunamadı.</div>
+                )}
+              </section>
+
+              <section className="rounded-2xl border border-blue-100 bg-blue-50 p-5 space-y-3 shadow-sm">
+                <div className="flex items-center gap-2 text-blue-800">
+                  <ShieldCheck className="w-5 h-5" />
+                  <p className="font-semibold">Admin çözüm alanı</p>
+                </div>
+                <p className="text-sm text-blue-900/80 leading-relaxed">
+                  Çözüm işaretleme işlemi Supabase RPC ile sadece admin rolüne açık olacak şekilde tasarlandı. Rol bilgisini user_profiles tablosundan çekiyoruz.
+                </p>
+              </section>
+
+              <section id="replies" className="space-y-3">
+                {loadingReplies ? (
+                  <div className="space-y-2">
+                    {[...Array(3)].map((_, idx) => (
+                      <div key={idx} className="h-16 bg-slate-200 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : replies.length === 0 ? (
+                  <div className="text-center text-slate-500 py-6 bg-white border border-slate-200 rounded-2xl">Henüz yanıt yok.</div>
+                ) : (
+                  replies.map((reply) => (
+                    <div
+                      key={reply.id}
+                      className={`rounded-2xl border p-4 space-y-2 shadow-sm ${
+                        reply.is_solution
+                          ? 'border-emerald-300 bg-emerald-50'
+                          : reply.is_admin_response
+                            ? 'border-blue-200 bg-blue-50'
+                            : 'border-slate-200 bg-white'
+                      }`}
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Çözüm olarak işaretle
-                    </button>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {reply.is_admin_response ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                              <ShieldCheck className="w-4 h-4" /> Admin yanıtı
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                              <MessageCircle className="w-4 h-4" /> Kullanıcı yanıtı
+                            </span>
+                          )}
+                          {reply.is_solution && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              <CheckCircle2 className="w-4 h-4" /> Çözüm
+                            </span>
+                          )}
+                          <button
+                            onClick={() => setQuote(reply.body)}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border border-slate-200 text-blue-700 hover:bg-blue-50"
+                          >
+                            <Quote className="w-3 h-3" /> Alıntıla
+                          </button>
+                        </div>
+                        <p className="text-xs text-slate-500">{formatDate(reply.created_at)}</p>
+                      </div>
+                      <p className="text-sm text-slate-800 whitespace-pre-line leading-relaxed">{reply.body}</p>
+                      {canModerate && !reply.is_solution && (
+                        <button
+                          onClick={() => handleMarkSolution(reply)}
+                          className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition"
+                        >
+                          <CheckCircle2 className="w-4 h-4" /> Çözüm olarak işaretle
+                        </button>
+                      )}
+                      <div className="flex items-center gap-3 text-xs text-slate-600">
+                        <button
+                          onClick={() => handleLike(reply.id)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-slate-200 hover:bg-blue-50 text-blue-700"
+                        >
+                          <Heart className="w-3 h-3" /> {likes[reply.id] || 0}
+                        </button>
+                        <button
+                          onClick={() => notification.info('Şikayet kaydedildi.')}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-amber-200 text-amber-700 hover:bg-amber-50"
+                        >
+                          <Flag className="w-3 h-3" /> Şikayet et
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </section>
+
+              {!thread?.is_locked && (
+                <form
+                  id="reply-form"
+                  onSubmit={handleReplySubmit}
+                  className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-slate-600">
+                      {isGoogleLinked ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <BadgeCheck className="w-4 h-4" /> Google bağlı
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                          <Lock className="w-4 h-4" /> Bağlantı gerekiyor
+                        </span>
+                      )}
+                      <span>Admin yanıtları otomatik vurgulanır.</span>
+                    </div>
+                    <div className="text-xs text-slate-500">{replies.length} yanıt</div>
+                  </div>
+                  {quote && (
+                    <div className="text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                      Alıntı: {quote.slice(0, 140)}...
+                      <button onClick={() => setQuote('')} className="ml-2 underline text-blue-700">kaldır</button>
+                    </div>
                   )}
-                  <div className="flex items-center gap-3 text-xs text-zinc-400">
-                    <button
-                      onClick={() => handleLike(reply.id)}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 border border-white/10 hover:border-green-400/40"
-                    >
-                      <Heart className="w-3 h-3" /> {likes[reply.id] || 0}
-                    </button>
-                    <button
-                      onClick={() => notification.info('Şikayet kaydedildi.')}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 border border-white/10 hover:border-amber-400/40"
-                    >
-                      <Flag className="w-3 h-3" /> Şikayet et
-                    </button>
+                  <textarea
+                    placeholder="Kendi deneyimini ve çözüm adımlarını paylaş..."
+                    value={replyBody}
+                    onChange={(e) => setReplyBody(e.target.value)}
+                    required
+                    rows={4}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-blue-400 resize-none"
+                  />
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-500 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={!replyBody}
+                  >
+                    <Send className="w-4 h-4" /> Yanıt Gönder
+                  </button>
+                </form>
+              )}
+
+              {thread?.is_locked && (
+                <div className="flex items-center gap-2 text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm">
+                  <Lock className="w-4 h-4" />
+                  Konu çözüm işaretlendiği için kilitlendi. Yeni yanıt eklemek için adminlerle iletişime geç.
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4" id="similar-topics">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+                <h3 className="text-sm font-semibold text-slate-800">Konu bilgileri</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm text-slate-700">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-slate-500">Görüntülenme</span>
+                    <span className="font-semibold text-slate-900">{thread?.view_count ?? '-'} </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-slate-500">Beğeniler</span>
+                    <span className="font-semibold text-slate-900">{thread ? likes[thread.id] || 12 : '-'}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-slate-500">Durum</span>
+                    <span className="font-semibold text-slate-900 capitalize">{thread?.status || '—'}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-slate-500">Yanıt sayısı</span>
+                    <span className="font-semibold text-slate-900">{replies.length}</span>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
 
-        {!thread?.is_locked && (
-          <form onSubmit={handleReplySubmit} className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-5 forum-card">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-zinc-400">
-                {isGoogleLinked ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/15 text-green-200 border border-green-500/40">
-                    <BadgeCheck className="w-4 h-4" /> Google bağlı
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-500/30">
-                    <Lock className="w-4 h-4" /> Bağlantı gerekiyor
-                  </span>
-                )}
-                <span>Admin yanıtları otomatik vurgulanır.</span>
-              </div>
-              <div className="text-xs text-zinc-400">{replies.length} yanıt</div>
-              </div>
-            {quote && (
-              <div className="text-xs text-emerald-200 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-3 py-2">
-                Alıntı: {quote.slice(0, 140)}...
-                <button onClick={() => setQuote('')} className="ml-2 underline text-emerald-100">kaldır</button>
-              </div>
-            )}
-            <textarea
-              placeholder="Kendi deneyimini ve çözüm adımlarını paylaş..."
-              value={replyBody}
-              onChange={(e) => setReplyBody(e.target.value)}
-              required
-              rows={4}
-              className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-green-500 resize-none"
-            />
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-zinc-950 font-semibold hover:bg-emerald-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
-              disabled={!replyBody}
-            >
-              <Send className="w-4 h-4" /> Yanıt Gönder
-            </button>
-          </form>
-        )}
+              <SimilarTopicsList threads={similarThreads} />
 
-        {thread?.is_locked && (
-          <div className="flex items-center gap-2 text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 text-sm">
-            <Lock className="w-4 h-4" />
-            Konu çözüm işaretlendiği için kilitlendi. Yeni yanıt eklemek için adminlerle iletişime geç.
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 shadow-sm text-sm text-slate-500">
+                Sağ sütun için reklam veya widget alanı. Duyuru, kampanya veya topluluk kuralları için kullanılabilir.
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
+    </div>
+  );
+}
+
+function SimilarTopicsList({ threads }: { threads: ForumThread[] }) {
+  if (!threads.length) return null;
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-slate-800">Benzer konular</h3>
+        <span className="text-xs text-slate-500">{threads.length} başlık</span>
+      </div>
+      <ul className="divide-y divide-slate-200">
+        {threads.map((item) => (
+          <li key={item.id} className="py-3 first:pt-0 last:pb-0">
+            <button
+              onClick={() => navigate(buildThreadPath(item))}
+              className="text-left w-full space-y-1"
+            >
+              <p className="font-semibold text-slate-900 hover:text-blue-700 leading-snug">{item.title}</p>
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                {item.category?.name && <span className="text-slate-500">{item.category.name}</span>}
+                {item.forum?.name && <span className="text-slate-400">• {item.forum.name}</span>}
+              </div>
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                <span className="inline-flex items-center gap-1">
+                  <MessageCircle className="w-3 h-3" /> {item.reply_count ?? 0}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Eye className="w-3 h-3" /> {item.view_count}
+                </span>
+                <span className="inline-flex items-center gap-1 capitalize">
+                  <Timer className="w-3 h-3" /> {item.status}
+                </span>
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
