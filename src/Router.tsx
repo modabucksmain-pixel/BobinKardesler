@@ -13,7 +13,8 @@ import { CommunityPage } from './pages/CommunityPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { PollsPage } from './pages/PollsPage';
 import { AnnouncementsPage } from './pages/AnnouncementsPage';
-import { LoginPage } from './pages/admin/LoginPage';
+import { AdminLoginPage } from './pages/admin/LoginPage';
+import { LoginPage } from './pages/LoginPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { BlogListPage } from './pages/admin/BlogListPage';
 import { BlogEditorPage } from './pages/admin/BlogEditorPage';
@@ -97,24 +98,11 @@ export function Router() {
   } else if (path === '/account') {
     content = <AccountSettingsPage />;
   } else if (path === '/login') {
-    content = (
-      <LoginPage
-        redirectPath="/account"
-        title="Hesabına giriş yap"
-        subtitle="Bobin Kardeşler hesabınla oturum aç"
-      />
-    );
+    content = <LoginPage redirectPath="/account" />;
   } else if (path === '/register') {
-    content = (
-      <LoginPage
-        redirectPath="/account"
-        defaultMode="register"
-        title="Hesap oluştur"
-        subtitle="Bobin Kardeşler topluluğuna katıl"
-      />
-    );
+    content = <LoginPage redirectPath="/account" defaultMode="register" />;
   } else if (path === '/admin/login') {
-    content = <LoginPage />;
+    content = <AdminLoginPage />;
   } else if (path === '/admin') {
     content = <AdminDashboard />;
   } else if (path === '/admin/blog') {
