@@ -88,34 +88,34 @@ export function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 sm:h-24">
-          <Link href="/" className="flex items-center space-x-3.5 group">
+        <div className="flex items-center justify-between h-24">
+          <Link href="/" className="flex items-center space-x-4 group">
             <div className="relative">
               <div className="absolute inset-0 rounded-xl bg-green-500/20 blur-md transition group-hover:scale-110" />
-              <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 border border-white/10 text-green-400 shadow-inner">
-                <Zap className="w-7 h-7" />
+              <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 border border-white/10 text-green-400 shadow-inner">
+                <Zap className="w-8 h-8" />
               </div>
             </div>
             <div className="leading-tight">
-              <p className="text-sm text-zinc-400 flex items-center gap-2">
+              <p className="text-base text-zinc-400 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-green-400" />
                 Elektrik & Maker Üssü
               </p>
-              <span className="text-xl sm:text-2xl font-black text-white tracking-tight">Bobin Kardeşler</span>
+              <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">Bobin Kardeşler</span>
             </div>
           </Link>
 
           <div className="flex items-center gap-3">
             <Link
               href="/ara"
-              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-3 text-white transition hover:border-green-400/40"
+              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-3.5 sm:p-4 text-white transition hover:border-green-400/40"
               aria-label="Ara"
             >
               <Search className="h-5 w-5" />
             </Link>
             <button
               onClick={() => setIsDrawerOpen((prev) => !prev)}
-              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-3 text-white transition hover:border-green-400/40"
+              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-3.5 sm:p-4 text-white transition hover:border-green-400/40"
               aria-label="Menüyü Aç"
               aria-expanded={isDrawerOpen}
               aria-controls="main-navigation-drawer"

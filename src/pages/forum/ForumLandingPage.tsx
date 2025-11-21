@@ -26,7 +26,7 @@ export function ForumLandingPage() {
   }
 
   return (
-    <div className="min-h-screen pt-20 sm:pt-24 pb-12 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black">
+    <div className="min-h-screen pt-24 sm:pt-28 pb-12 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         <header className="rounded-2xl border border-green-500/20 bg-zinc-900/60 p-6 sm:p-10 shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 via-emerald-500/5 to-transparent pointer-events-none" />
