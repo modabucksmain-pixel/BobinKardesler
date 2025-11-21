@@ -249,4 +249,6 @@ CREATE INDEX IF NOT EXISTS idx_forum_categories_slug ON forum_categories(slug);
 CREATE INDEX IF NOT EXISTS idx_forum_forums_slug ON forum_forums(slug);
 CREATE INDEX IF NOT EXISTS idx_forum_threads_forum_id ON forum_threads(forum_id);
 CREATE INDEX IF NOT EXISTS idx_forum_threads_slug ON forum_threads(slug);
+CREATE INDEX IF NOT EXISTS idx_forum_threads_last_activity_at ON forum_threads(last_activity_at DESC);
 CREATE INDEX IF NOT EXISTS idx_forum_replies_thread_id ON forum_replies(thread_id);
+CREATE INDEX IF NOT EXISTS idx_forum_replies_created_at ON forum_replies(created_at);
