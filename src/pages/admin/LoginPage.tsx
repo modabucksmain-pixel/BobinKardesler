@@ -2,13 +2,25 @@ import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Zap, AlertCircle, ShieldCheck, Loader2 } from 'lucide-react';
 
-export function LoginPage() {
+interface LoginPageProps {
+  redirectPath?: string;
+  defaultMode?: 'login' | 'register';
+  title?: string;
+  subtitle?: string;
+}
+
+export function LoginPage({
+  redirectPath = '/admin',
+  defaultMode = 'login',
+  title,
+  subtitle,
+}: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register'>(defaultMode);
   const { signIn, signUp, signInWithGoogle } = useAuth();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,7 +39,7 @@ export function LoginPage() {
         return;
       }
 
-      window.location.href = '/admin';
+      window.location.href = redirectPath;
     } else {
       const { error } = await signUp(email, password);
 
@@ -46,7 +58,7 @@ export function LoginPage() {
   async function handleGoogleSignIn() {
     setError('');
     setSuccess('');
-    const { error } = await signInWithGoogle('/admin');
+    const { error } = await signInWithGoogle(redirectPath);
     if (error) {
       console.error('Google sign-in error:', error);
       setError('Google ile giriş başarısız: ' + error.message);
@@ -67,9 +79,11 @@ export function LoginPage() {
           </div>
 
           <h1 className="text-3xl font-bold text-center text-green-500 mb-2 glow-text">
-            {mode === 'login' ? 'Admin Girişi' : 'Admin Kayıt'}
+            {title ?? (mode === 'login' ? 'Admin Girişi' : 'Admin Kayıt')}
           </h1>
-          <p className="text-center text-zinc-400 mb-8">Bobin Kardeşler Yönetim Paneli</p>
+          <p className="text-center text-zinc-400 mb-8">
+            {subtitle ?? 'Bobin Kardeşler Yönetim Paneli'}
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (

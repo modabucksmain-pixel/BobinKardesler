@@ -31,6 +31,7 @@ import { ForumLandingPage } from './pages/forum/ForumLandingPage';
 import { ForumCategoryPage } from './pages/forum/ForumCategoryPage';
 import { ForumForumPage } from './pages/forum/ForumForumPage';
 import { ForumThreadPage } from './pages/forum/ForumThreadPage';
+import { AccountSettingsPage } from './pages/AccountSettingsPage';
 
 export function Router() {
   const [path, setPath] = useState(window.location.pathname);
@@ -92,6 +93,25 @@ export function Router() {
     content = <AnnouncementsPage />;
   } else if (path === '/hakkimizda') {
     content = <AboutPage />;
+  } else if (path === '/account') {
+    content = <AccountSettingsPage />;
+  } else if (path === '/login') {
+    content = (
+      <LoginPage
+        redirectPath="/account"
+        title="Hesabına giriş yap"
+        subtitle="Bobin Kardeşler hesabınla oturum aç"
+      />
+    );
+  } else if (path === '/register') {
+    content = (
+      <LoginPage
+        redirectPath="/account"
+        defaultMode="register"
+        title="Hesap oluştur"
+        subtitle="Bobin Kardeşler topluluğuna katıl"
+      />
+    );
   } else if (path === '/admin/login') {
     content = <LoginPage />;
   } else if (path === '/admin') {
