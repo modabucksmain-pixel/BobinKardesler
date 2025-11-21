@@ -164,7 +164,7 @@ export function ForumThreadPage({ slugAndId }: Props) {
   }
 
   return (
-    <div className="min-h-screen pt-20 sm:pt-24 pb-12 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black">
+    <div className="min-h-screen pt-24 sm:pt-28 pb-12 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div className="flex items-center gap-2 text-sm text-zinc-300">
           <button
