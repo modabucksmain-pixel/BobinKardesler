@@ -6,10 +6,10 @@ const STORAGE_KEY = 'bk-forum-theme';
 type ThemeMode = 'dark' | 'light';
 
 export function ForumThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>('dark');
+  const [mode, setMode] = useState<ThemeMode>('light');
 
   useEffect(() => {
-    const saved = (localStorage.getItem(STORAGE_KEY) as ThemeMode | null) ?? 'dark';
+    const saved = (localStorage.getItem(STORAGE_KEY) as ThemeMode | null) ?? 'light';
     setMode(saved);
   }, []);
 
@@ -21,7 +21,7 @@ export function ForumThemeToggle() {
   return (
     <button
       onClick={() => setMode((prev) => (prev === 'dark' ? 'light' : 'dark'))}
-      className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white hover:border-green-400/50 hover:text-green-100"
+      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
       aria-label="Tema değiştir"
     >
       {mode === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
