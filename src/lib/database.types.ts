@@ -494,10 +494,67 @@ export interface Database {
           participated_at?: string
         }
       }
+      forum_categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      forum_forums: {
+        Row: {
+          id: string
+          category_id: string
+          name: string
+          slug: string
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          category_id: string
+          name: string
+          slug: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          category_id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       forum_threads: {
         Row: {
           id: string
+          forum_id: string
           title: string
+          slug: string | null
           body: string
           tags: string[]
           status: 'open' | 'in_progress' | 'resolved'
@@ -513,7 +570,9 @@ export interface Database {
         }
         Insert: {
           id?: string
+          forum_id: string
           title: string
+          slug?: string | null
           body: string
           tags?: string[]
           status?: 'open' | 'in_progress' | 'resolved'
@@ -529,7 +588,9 @@ export interface Database {
         }
         Update: {
           id?: string
+          forum_id?: string
           title?: string
+          slug?: string | null
           body?: string
           tags?: string[]
           status?: 'open' | 'in_progress' | 'resolved'
