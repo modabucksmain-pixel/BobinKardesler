@@ -27,7 +27,11 @@ import { NewsletterAdminPage } from './pages/admin/NewsletterAdminPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { ForumPage } from './pages/ForumPage';
+import { ForumLandingPage } from './pages/forum/ForumLandingPage';
+import { ForumCategoryPage } from './pages/forum/ForumCategoryPage';
+import { ForumForumPage } from './pages/forum/ForumForumPage';
+import { ForumThreadPage } from './pages/forum/ForumThreadPage';
+import { AccountSettingsPage } from './pages/AccountSettingsPage';
 
 export function Router() {
   const [path, setPath] = useState(window.location.pathname);
@@ -72,11 +76,42 @@ export function Router() {
   } else if (path === '/anketler') {
     content = <PollsPage />;
   } else if (path === '/forum') {
-    content = <ForumPage />;
+    content = <ForumLandingPage />;
+  } else if (path.startsWith('/forum/konu/')) {
+    const slugAndId = decodeURIComponent(path.replace('/forum/konu/', ''));
+    content = <ForumThreadPage slugAndId={slugAndId} />;
+  } else if (path.startsWith('/forum/kategori/')) {
+    const parts = path.replace('/forum/kategori/', '').split('/').filter(Boolean);
+    if (parts.length >= 2) {
+      content = <ForumForumPage categorySlug={parts[0]} forumSlug={parts[1]} />;
+    } else if (parts.length === 1) {
+      content = <ForumCategoryPage categorySlug={parts[0]} />;
+    } else {
+      content = <ForumLandingPage />;
+    }
   } else if (path === '/duyurular') {
     content = <AnnouncementsPage />;
   } else if (path === '/hakkimizda') {
     content = <AboutPage />;
+  } else if (path === '/account') {
+    content = <AccountSettingsPage />;
+  } else if (path === '/login') {
+    content = (
+      <LoginPage
+        redirectPath="/account"
+        title="Hesabına giriş yap"
+        subtitle="Bobin Kardeşler hesabınla oturum aç"
+      />
+    );
+  } else if (path === '/register') {
+    content = (
+      <LoginPage
+        redirectPath="/account"
+        defaultMode="register"
+        title="Hesap oluştur"
+        subtitle="Bobin Kardeşler topluluğuna katıl"
+      />
+    );
   } else if (path === '/admin/login') {
     content = <LoginPage />;
   } else if (path === '/admin') {
