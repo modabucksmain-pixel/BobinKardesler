@@ -1,67 +1,27 @@
 import { supabase } from './supabase';
 import { slugify } from './slug';
+import type { ForumCategory, ForumForum, ForumReply, ForumResult, ForumThread } from './forumTypes';
+import {
+  addMockReply,
+  addMockThread,
+  getMockCategories,
+  getMockCategory,
+  getMockForum,
+  getMockReplies,
+  getMockRole,
+  getMockThread,
+  getMockThreads,
+  incrementMockView,
+  markMockSolution,
+} from './forumMockData';
 
-export type ForumStatus = 'open' | 'in_progress' | 'resolved';
+export type { ForumCategory, ForumForum, ForumReply, ForumResult, ForumThread, ForumStatus } from './forumTypes';
 
-export interface ForumCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  created_at: string;
-}
+type ForumForumRow = ForumForum & { forum_threads?: { count: number }[] };
+type CategoryRow = ForumCategory & { forum_forums?: ForumForumRow[] };
+type ThreadRow = ForumThread & { forum_replies?: { count: number }[]; forum_forums?: ForumForum & { forum_categories?: ForumCategory } };
 
-export interface ForumForum {
-  id: string;
-  category_id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  created_at: string;
-  thread_count?: number;
-  category?: ForumCategory;
-}
-
-export interface ForumThread {
-  id: string;
-  forum_id: string;
-  title: string;
-  slug: string | null;
-  body: string;
-  tags: string[];
-  status: ForumStatus;
-  created_by: string | null;
-  created_by_email: string | null;
-  google_connected: boolean;
-  solution_reply_id: string | null;
-  last_activity_at: string;
-  created_at: string;
-  updated_at: string;
-  view_count: number;
-  is_locked: boolean;
-  reply_count?: number;
-  forum?: ForumForum;
-  category?: ForumCategory;
-}
-
-export interface ForumReply {
-  id: string;
-  thread_id: string;
-  body: string;
-  author_id: string | null;
-  author_email: string | null;
-  is_admin_response: boolean;
-  is_solution: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ForumResult<T> {
-  data: T | null;
-  error: Error | null;
-}
-
-const DEV_MOCKS_ENABLED = import.meta.env.VITE_ENABLE_FORUM_MOCKS === 'true';
+const DEV_MOCKS_ENABLED = import.meta.env.VITE_ENABLE_FORUM_MOCKS !== 'false';
 
 function errorResult<T>(error: Error | null, fallback?: T): ForumResult<T> {
   if (error) console.error(error);
@@ -72,6 +32,10 @@ function errorResult<T>(error: Error | null, fallback?: T): ForumResult<T> {
 }
 
 export async function getForumCategoriesWithForums(): Promise<ForumResult<(ForumCategory & { forums: ForumForum[] })[]>> {
+  if (DEV_MOCKS_ENABLED) {
+    return { data: getMockCategories(), error: null };
+  }
+
   const { data, error } = await supabase
     .from('forum_categories')
     .select(
@@ -83,13 +47,13 @@ export async function getForumCategoriesWithForums(): Promise<ForumResult<(Forum
     return errorResult(error ?? new Error('Kategori verisi alınamadı'));
   }
 
-  const categories = data.map((category: any) => ({
+  const categories = (data as CategoryRow[]).map((category) => ({
     id: category.id,
     name: category.name,
     slug: category.slug,
     description: category.description,
     created_at: category.created_at,
-    forums: (category.forum_forums ?? []).map((forum: any) => ({
+    forums: (category.forum_forums ?? []).map((forum) => ({
       id: forum.id,
       category_id: forum.category_id,
       name: forum.name,
@@ -104,6 +68,11 @@ export async function getForumCategoriesWithForums(): Promise<ForumResult<(Forum
 }
 
 export async function getCategoryWithForums(slug: string): Promise<ForumResult<ForumCategory & { forums: ForumForum[] }>> {
+  if (DEV_MOCKS_ENABLED) {
+    const category = getMockCategory(slug);
+    return category ? { data: category, error: null } : errorResult(new Error('Kategori bulunamadı'));
+  }
+
   const { data, error } = await supabase
     .from('forum_categories')
     .select(
@@ -116,14 +85,16 @@ export async function getCategoryWithForums(slug: string): Promise<ForumResult<F
     return errorResult(error ?? new Error('Kategori bulunamadı'));
   }
 
+  const categoryData = data as CategoryRow;
+
   return {
     data: {
-      id: data.id,
-      name: data.name,
-      slug: data.slug,
-      description: data.description,
-      created_at: data.created_at,
-      forums: (data.forum_forums ?? []).map((forum: any) => ({
+      id: categoryData.id,
+      name: categoryData.name,
+      slug: categoryData.slug,
+      description: categoryData.description,
+      created_at: categoryData.created_at,
+      forums: (categoryData.forum_forums ?? []).map((forum) => ({
         id: forum.id,
         category_id: forum.category_id,
         name: forum.name,
@@ -138,6 +109,11 @@ export async function getCategoryWithForums(slug: string): Promise<ForumResult<F
 }
 
 export async function getForumBySlugs(categorySlug: string, forumSlug: string): Promise<ForumResult<ForumForum>> {
+  if (DEV_MOCKS_ENABLED) {
+    const forum = getMockForum(categorySlug, forumSlug);
+    return forum ? { data: forum, error: null } : errorResult(new Error('Forum bulunamadı'));
+  }
+
   const { data, error } = await supabase
     .from('forum_forums')
     .select(
@@ -166,6 +142,10 @@ export async function getForumBySlugs(categorySlug: string, forumSlug: string): 
 }
 
 export async function getForumThreads(forumId: string): Promise<ForumResult<ForumThread[]>> {
+  if (DEV_MOCKS_ENABLED) {
+    return { data: getMockThreads(forumId), error: null };
+  }
+
   const { data, error } = await supabase
     .from('forum_threads')
     .select(
@@ -179,7 +159,7 @@ export async function getForumThreads(forumId: string): Promise<ForumResult<Foru
   }
 
   return {
-    data: data.map((thread: any) => ({
+    data: (data as ThreadRow[]).map((thread) => ({
       ...thread,
       reply_count: thread.forum_replies?.[0]?.count ?? 0,
     })),
@@ -188,6 +168,11 @@ export async function getForumThreads(forumId: string): Promise<ForumResult<Foru
 }
 
 export async function getForumThreadById(threadId: string): Promise<ForumResult<ForumThread>> {
+  if (DEV_MOCKS_ENABLED) {
+    const thread = getMockThread(threadId);
+    return thread ? { data: thread, error: null } : errorResult(new Error('Konu bulunamadı'));
+  }
+
   const { data, error } = await supabase
     .from('forum_threads')
     .select(
@@ -203,15 +188,19 @@ export async function getForumThreadById(threadId: string): Promise<ForumResult<
 
   return {
     data: {
-      ...data,
-      forum: data.forum_forums,
-      category: data.forum_forums?.forum_categories,
+      ...(data as ThreadRow),
+      forum: (data as ThreadRow).forum_forums,
+      category: (data as ThreadRow).forum_forums?.forum_categories,
     },
     error: null,
   };
 }
 
 export async function getForumReplies(threadId: string): Promise<ForumResult<ForumReply[]>> {
+  if (DEV_MOCKS_ENABLED) {
+    return { data: getMockReplies(threadId), error: null };
+  }
+
   const { data, error } = await supabase
     .from('forum_replies')
     .select('*')
@@ -237,6 +226,10 @@ export async function createForumThread(
     last_activity_at: now,
   };
 
+  if (DEV_MOCKS_ENABLED) {
+    return { data: addMockThread(payload), error: null };
+  }
+
   const { data, error } = await supabase.from('forum_threads').insert(payload).select().single();
 
   if (error || !data) {
@@ -256,6 +249,10 @@ export async function createForumReply(
     updated_at: now,
   };
 
+  if (DEV_MOCKS_ENABLED) {
+    return { data: addMockReply(payload), error: null };
+  }
+
   const { data, error } = await supabase.from('forum_replies').insert(payload).select().single();
 
   if (error || !data) {
@@ -268,6 +265,11 @@ export async function createForumReply(
 }
 
 export async function markThreadSolved(threadId: string, replyId: string): Promise<ForumResult<null>> {
+  if (DEV_MOCKS_ENABLED) {
+    markMockSolution(threadId, replyId);
+    return { data: null, error: null };
+  }
+
   const { error } = await supabase.rpc('mark_thread_solution', {
     p_thread_id: threadId,
     p_reply_id: replyId,
@@ -281,6 +283,11 @@ export async function markThreadSolved(threadId: string, replyId: string): Promi
 }
 
 export async function incrementThreadViewCount(threadId: string) {
+  if (DEV_MOCKS_ENABLED) {
+    incrementMockView(threadId);
+    return;
+  }
+
   const { error } = await supabase.rpc('increment_thread_views', { p_thread_id: threadId });
   if (error) {
     console.error('Görüntülenme artışı başarısız:', error);
@@ -288,6 +295,10 @@ export async function incrementThreadViewCount(threadId: string) {
 }
 
 export async function getUserForumRole(userId: string): Promise<'admin' | 'moderator' | 'user' | null> {
+  if (DEV_MOCKS_ENABLED) {
+    return getMockRole(userId);
+  }
+
   const { data, error } = await supabase.from('user_profiles').select('role').eq('id', userId).single();
   if (error) {
     console.error('Rol alınamadı:', error);
@@ -299,4 +310,11 @@ export async function getUserForumRole(userId: string): Promise<'admin' | 'moder
 export function buildThreadPath(thread: Pick<ForumThread, 'id' | 'title' | 'slug'>) {
   const safeSlug = thread.slug && thread.slug.length > 0 ? thread.slug : slugify(thread.title);
   return `/forum/konu/${safeSlug}-${thread.id}`;
+}
+
+export function getLatestThreads(limit = 12): ForumThread[] {
+  const threads = getMockThreads('all');
+  return threads
+    .sort((a, b) => new Date(b.last_activity_at).getTime() - new Date(a.last_activity_at).getTime())
+    .slice(0, limit);
 }

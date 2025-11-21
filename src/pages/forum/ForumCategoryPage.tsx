@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, FolderOpen } from 'lucide-react';
+import { ForumThemeToggle } from '../../components/forum/ForumThemeToggle';
 import { getCategoryWithForums, type ForumCategory, type ForumForum } from '../../lib/forum';
 import { navigate } from '../../lib/navigation';
 
@@ -14,6 +15,7 @@ export function ForumCategoryPage({ categorySlug }: Props) {
 
   useEffect(() => {
     document.title = `Forum | ${categorySlug}`;
+    document.body.dataset.forumTheme = (localStorage.getItem('bk-forum-theme') as 'dark' | 'light' | null) ?? 'dark';
     loadCategory();
   }, [categorySlug]);
 
@@ -43,16 +45,17 @@ export function ForumCategoryPage({ categorySlug }: Props) {
           </button>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
+        <div className="forum-card rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-white/10 text-white border border-white/20">
+              <div className="forum-chip inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-white/10 text-white border border-white/20">
                 <FolderOpen className="w-4 h-4" />
                 Kategori
               </div>
               <h1 className="text-3xl font-bold text-white">{category?.name || 'Kategori Yükleniyor'}</h1>
-              {category?.description && <p className="text-zinc-300">{category.description}</p>}
+              {category?.description && <p className="forum-muted">{category.description}</p>}
             </div>
+            <ForumThemeToggle />
           </div>
         </div>
 
@@ -67,20 +70,20 @@ export function ForumCategoryPage({ categorySlug }: Props) {
                 <button
                   key={forum.id}
                   onClick={() => navigate(`/forum/kategori/${category.slug}/${forum.slug}`)}
-                  className="text-left rounded-xl border border-white/10 bg-zinc-900/60 hover:border-green-400/60 hover:bg-zinc-900/90 transition p-5"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <h3 className="text-xl font-semibold text-white">{forum.name}</h3>
-                      {forum.description && <p className="text-sm text-zinc-400">{forum.description}</p>}
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-green-400" />
+                className="forum-card text-left rounded-xl border border-white/10 bg-zinc-900/60 hover:border-green-400/60 hover:bg-zinc-900/90 transition p-5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-semibold text-white">{forum.name}</h3>
+                    {forum.description && <p className="text-sm forum-muted">{forum.description}</p>}
                   </div>
-                  {typeof forum.thread_count === 'number' && (
-                    <p className="text-xs text-zinc-400 mt-2">{forum.thread_count} başlık</p>
-                  )}
-                </button>
-              ))}
+                  <ArrowRight className="w-4 h-4 text-green-400" />
+                </div>
+                {typeof forum.thread_count === 'number' && (
+                  <p className="text-xs forum-muted mt-2">{forum.thread_count} başlık</p>
+                )}
+              </button>
+            ))}
         </div>
       </div>
     </div>

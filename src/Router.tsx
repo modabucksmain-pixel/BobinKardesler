@@ -32,6 +32,7 @@ import { ForumLandingPage } from './pages/forum/ForumLandingPage';
 import { ForumCategoryPage } from './pages/forum/ForumCategoryPage';
 import { ForumForumPage } from './pages/forum/ForumForumPage';
 import { ForumThreadPage } from './pages/forum/ForumThreadPage';
+import { ForumLatestPage } from './pages/forum/ForumLatestPage';
 import { AccountSettingsPage } from './pages/AccountSettingsPage';
 
 export function Router() {
@@ -78,6 +79,8 @@ export function Router() {
     content = <PollsPage />;
   } else if (path === '/forum') {
     content = <ForumLandingPage />;
+  } else if (path === '/forum/son-konular') {
+    content = <ForumLatestPage />;
   } else if (path.startsWith('/forum/konu/')) {
     const slugAndId = decodeURIComponent(path.replace('/forum/konu/', ''));
     content = <ForumThreadPage slugAndId={slugAndId} />;
