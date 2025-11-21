@@ -142,120 +142,159 @@ export function Navbar() {
         />
         <div
           id="main-navigation-drawer"
-          className={`absolute left-0 top-0 h-full w-screen max-w-full transform transition-transform duration-300 ease-in-out ${
+          className={`absolute inset-0 overflow-hidden transform transition-transform duration-300 ease-in-out ${
             isDrawerOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          <div
-            ref={drawerRef}
-            role="dialog"
-            aria-modal="true"
-            className="flex h-full w-full max-w-md flex-col bg-zinc-950/95 backdrop-blur-xl border-r border-white/10 shadow-2xl"
-          >
-            <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
-              <Link
-                href="/"
-                className="flex items-center space-x-2 rounded-lg px-2 py-1 transition hover:bg-white/5"
-                onClick={() => setIsDrawerOpen(false)}
-              >
-                <Zap className="w-6 h-6 text-green-400" />
-                <span className="text-base font-semibold text-white">Bobin Kardeşler</span>
-              </Link>
-              <button
-                onClick={() => setIsDrawerOpen(false)}
-                className="rounded-lg p-2 text-zinc-200 hover:bg-white/5"
-                aria-label="Menüyü Kapat"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="flex-1 px-4 py-5 space-y-6 overflow-y-auto">
-              <div className="space-y-3">
+          <div className="flex h-full w-full items-center px-2 sm:px-4 md:px-6">
+            <div
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              className="relative flex h-[96%] w-full max-w-6xl lg:max-w-7xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2xl shadow-green-500/10 backdrop-blur-2xl"
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
                 <Link
-                  href="/ara"
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:border-green-400/50 hover:text-green-100"
+                  href="/"
+                  className="flex items-center space-x-2 rounded-lg px-2 py-1 transition hover:bg-white/5"
                   onClick={() => setIsDrawerOpen(false)}
                 >
-                  <div className="flex items-center gap-3">
-                    <Search className="h-5 w-5" />
-                    <span>Arama</span>
-                  </div>
-                  <span className="text-xs text-zinc-400">⌘K</span>
+                  <Zap className="w-6 h-6 text-green-400" />
+                  <span className="text-base font-semibold text-white">Bobin Kardeşler</span>
                 </Link>
-                {!loading && (
-                  <div className="grid grid-cols-2 gap-3">
-                    {user ? (
-                      <>
-                        <Link
-                          href="/account"
-                          onClick={() => setIsDrawerOpen(false)}
-                          className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-semibold text-white transition hover:border-green-400/60 hover:text-green-100"
-                        >
-                          Hesap Ayarları
-                        </Link>
-                        <button
-                          onClick={async () => {
-                            await signOut();
-                            setIsDrawerOpen(false);
-                            window.location.href = '/';
-                          }}
-                          className="flex items-center justify-center rounded-xl border border-white/10 bg-white/0 px-3 py-3 text-sm font-semibold text-white transition hover:border-red-400/60 hover:text-red-100"
-                        >
-                          Çıkış
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <Link
-                          href="/login"
-                          onClick={() => setIsDrawerOpen(false)}
-                          className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-semibold text-white transition hover:border-green-400/60 hover:text-green-100"
-                        >
-                          Giriş Yap
-                        </Link>
-                        <Link
-                          href="/register"
-                          onClick={() => setIsDrawerOpen(false)}
-                          className="flex items-center justify-center rounded-xl border border-green-500/60 bg-green-500/20 px-3 py-3 text-sm font-semibold text-green-100 transition hover:bg-green-500/30"
-                        >
-                          Hesap Oluştur
-                        </Link>
-                      </>
-                    )}
+                <button
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="rounded-lg p-2 text-zinc-200 hover:bg-white/5"
+                  aria-label="Menüyü Kapat"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-5 py-6">
+                <div className="grid gap-6 lg:grid-cols-[1.6fr,1fr] xl:grid-cols-[1.4fr,1fr]">
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <Link
+                        href="/ara"
+                        className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:border-green-400/50 hover:text-green-100"
+                        onClick={() => setIsDrawerOpen(false)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Search className="h-5 w-5" />
+                          <span>Arama</span>
+                        </div>
+                        <span className="text-xs text-zinc-400">⌘K</span>
+                      </Link>
+                      {!loading && (
+                        <div className="grid grid-cols-2 gap-3">
+                          {user ? (
+                            <>
+                              <Link
+                                href="/account"
+                                onClick={() => setIsDrawerOpen(false)}
+                                className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-semibold text-white transition hover:border-green-400/60 hover:text-green-100"
+                              >
+                                Hesap Ayarları
+                              </Link>
+                              <button
+                                onClick={async () => {
+                                  await signOut();
+                                  setIsDrawerOpen(false);
+                                  window.location.href = '/';
+                                }}
+                                className="flex items-center justify-center rounded-xl border border-white/10 bg-white/0 px-3 py-3 text-sm font-semibold text-white transition hover:border-red-400/60 hover:text-red-100"
+                              >
+                                Çıkış
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <Link
+                                href="/login"
+                                onClick={() => setIsDrawerOpen(false)}
+                                className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm font-semibold text-white transition hover:border-green-400/60 hover:text-green-100"
+                              >
+                                Giriş Yap
+                              </Link>
+                              <Link
+                                href="/register"
+                                onClick={() => setIsDrawerOpen(false)}
+                                className="flex items-center justify-center rounded-xl border border-green-500/60 bg-green-500/20 px-3 py-3 text-sm font-semibold text-green-100 transition hover:bg-green-500/30"
+                              >
+                                Hesap Oluştur
+                              </Link>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/20">
+                        <div className="text-xs uppercase tracking-wide text-zinc-400">İçerik</div>
+                        <div className="space-y-1">
+                          {contentLinks.map((link) => (
+                            <Link
+                              key={link.href}
+                              href={link.href}
+                              onClick={() => setIsDrawerOpen(false)}
+                              className="block rounded-xl px-4 py-3 text-base font-semibold text-white transition hover:bg-white/5"
+                            >
+                              {link.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/20">
+                        <div className="text-xs uppercase tracking-wide text-zinc-400">Topluluk</div>
+                        <div className="space-y-1">
+                          {communityLinks.map((link) => (
+                            <Link
+                              key={link.href}
+                              href={link.href}
+                              onClick={() => setIsDrawerOpen(false)}
+                              className="block rounded-xl px-4 py-3 text-base font-semibold text-white transition hover:bg-white/5"
+                            >
+                              {link.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
 
-              <div className="space-y-3">
-                <div className="text-xs uppercase tracking-wide text-zinc-400">İçerik</div>
-                <div className="space-y-1">
-                  {contentLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setIsDrawerOpen(false)}
-                      className="block rounded-xl px-4 py-3 text-base font-semibold text-white transition hover:bg-white/5"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="text-xs uppercase tracking-wide text-zinc-400">Topluluk</div>
-                <div className="space-y-1">
-                  {communityLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setIsDrawerOpen(false)}
-                      className="block rounded-xl px-4 py-3 text-base font-semibold text-white transition hover:bg-white/5"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
+                  <div className="flex flex-col gap-4 rounded-2xl border border-green-500/30 bg-green-500/10 p-4 shadow-lg shadow-green-500/20">
+                    <div className="space-y-2">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-green-200">
+                        <Sparkles className="h-4 w-4" />
+                        Yeni İçerikler
+                      </div>
+                      <p className="text-lg font-bold text-white">Güncel duyurular ve topluluk etkinliklerini kaçırma.</p>
+                      <p className="text-sm text-green-100/80">
+                        Blog yazıları, videolar ve forumdaki yeni başlıkları tek bir geniş panelden keşfet. Menüyü kapatmadan içeriklere hızlıca geçiş yap.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {['Duyurular', 'Forum', 'Projeler', 'Çekilişler'].map((item) => (
+                        <Link
+                          key={item}
+                          href={`/${item.toLowerCase()}`}
+                          onClick={() => setIsDrawerOpen(false)}
+                          className="flex items-center justify-between rounded-xl border border-white/10 bg-white/10 px-3 py-3 text-sm font-semibold text-white transition hover:border-green-400/50 hover:bg-white/20"
+                        >
+                          <span>{item}</span>
+                          <Sparkles className="h-4 w-4 text-green-200" />
+                        </Link>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs text-green-100/80">
+                      <span className="rounded-full bg-white/10 px-3 py-1">Hızlı erişim</span>
+                      <span className="rounded-full bg-white/10 px-3 py-1">Mobil uyumlu</span>
+                      <span className="rounded-full bg-white/10 px-3 py-1">Geniş görünüm</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
