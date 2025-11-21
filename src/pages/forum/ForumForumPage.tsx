@@ -330,7 +330,7 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
             </div>
           </div>
 
-          <div className="forum-card rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div id="forum-olustur" className="forum-card rounded-2xl border border-white/10 bg-white/5 p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
