@@ -9,7 +9,7 @@ interface LoginPageProps {
   subtitle?: string;
 }
 
-export function LoginPage({
+export function AdminLoginPage({
   redirectPath = '/admin',
   defaultMode = 'login',
   title,
