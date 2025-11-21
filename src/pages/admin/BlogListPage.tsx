@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { FileText, Edit, Trash2, Eye, Calendar, Plus, ArrowLeft } from 'lucide-react';
 import { formatDate } from '../../lib/youtube';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useAdminGuard } from '../../lib/admin';
 
 interface BlogPost {
   id: string;
@@ -15,7 +15,7 @@ interface BlogPost {
 }
 
 export function BlogListPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, checking } = useAdminGuard();
   const { success, error: showError } = useNotification();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,14 +23,14 @@ export function BlogListPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!checking && (!user || !isAdmin)) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!authLoading && user) {
+    if (!checking && user && isAdmin) {
       loadPosts();
     }
-  }, [user, authLoading]);
+  }, [user, checking, isAdmin]);
 
   async function loadPosts() {
     setLoading(true);
@@ -89,7 +89,7 @@ export function BlogListPage() {
     });
   }, [posts, searchTerm, statusFilter]);
 
-  if (authLoading || !user) {
+  if (checking || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   bio text,
   avatar_url text,
   website text,
+  role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'moderator', 'admin')),
   achievements jsonb DEFAULT '[]'::jsonb,
   preferences jsonb DEFAULT '{}'::jsonb,
   created_at timestamptz DEFAULT now(),
@@ -269,6 +270,16 @@ ALTER TABLE blog_post_ratings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_analytics ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for user_profiles
+CREATE OR REPLACE FUNCTION app_is_admin()
+RETURNS boolean
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN EXISTS (SELECT 1 FROM user_profiles WHERE id = auth.uid() AND role = 'admin');
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE POLICY "Anyone can view profiles"
   ON user_profiles FOR SELECT
   USING (true);
@@ -276,13 +287,19 @@ CREATE POLICY "Anyone can view profiles"
 CREATE POLICY "Users can update own profile"
   ON user_profiles FOR UPDATE
   TO authenticated
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
+  USING (auth.uid() = id AND (role = 'user' OR app_is_admin()))
+  WITH CHECK (auth.uid() = id AND (role = 'user' OR app_is_admin()));
 
 CREATE POLICY "Users can insert own profile"
   ON user_profiles FOR INSERT
   TO authenticated
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK (auth.uid() = id AND (role = 'user' OR app_is_admin()));
+
+CREATE POLICY "Admins can manage profiles"
+  ON user_profiles FOR ALL
+  TO authenticated
+  USING (app_is_admin())
+  WITH CHECK (app_is_admin());
 
 -- RLS Policies for user_bookmarks
 CREATE POLICY "Users can view own bookmarks"

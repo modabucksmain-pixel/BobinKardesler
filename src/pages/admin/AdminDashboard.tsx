@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { getChannelStats, type ChannelStats, formatNumber } from '../../lib/youtube';
 import {
@@ -17,9 +16,10 @@ import {
   Bell,
 } from 'lucide-react';
 import { AdminLayout } from '../../components/AdminLayout';
+import { useAdminGuard } from '../../lib/admin';
 
 export function AdminDashboard() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, checking } = useAdminGuard();
   const [stats, setStats] = useState<ChannelStats | null>(null);
   const [blogCount, setBlogCount] = useState(0);
   const [totalViews, setTotalViews] = useState(0);
@@ -31,14 +31,14 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!checking && (!user || !isAdmin)) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!authLoading && user) {
+    if (!checking && user && isAdmin) {
       loadStats();
     }
-  }, [user, authLoading]);
+  }, [user, checking, isAdmin]);
 
   async function loadStats() {
     setLoading(true);
@@ -73,7 +73,7 @@ export function AdminDashboard() {
     setLoading(false);
   }
 
-  if (authLoading || !user) {
+  if (checking || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

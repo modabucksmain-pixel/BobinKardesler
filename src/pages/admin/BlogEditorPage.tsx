@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Save, ArrowLeft, FileText } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useAdminGuard } from '../../lib/admin';
 
 interface BlogPost {
   id?: string;
@@ -15,7 +15,7 @@ interface BlogPost {
 }
 
 export function BlogEditorPage({ postId }: { postId?: string }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, checking } = useAdminGuard();
   const { success, error: showError, info } = useNotification();
   const [post, setPost] = useState<BlogPost>({
     title: '',
@@ -38,13 +38,13 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
   const readingTime = useMemo(() => calculateReadingTime(post.content), [post.content]);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!checking && (!user || !isAdmin)) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!authLoading && user && postId) {
+    if (!checking && user && isAdmin && postId) {
       loadPost();
-    } else if (!authLoading && user) {
+    } else if (!checking && user && isAdmin) {
       const savedDraft = localStorage.getItem(draftKey);
       if (savedDraft) {
         try {
@@ -56,13 +56,13 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
         }
       }
     }
-  }, [user, authLoading, postId, draftKey, info]);
+  }, [user, checking, isAdmin, postId, draftKey, info]);
 
   useEffect(() => {
-    if (!authLoading && user && !postId) {
+    if (!checking && user && isAdmin && !postId) {
       localStorage.setItem(draftKey, JSON.stringify(post));
     }
-  }, [post, draftKey, authLoading, user, postId]);
+  }, [post, draftKey, checking, user, isAdmin, postId]);
 
   async function loadPost() {
     setLoading(true);
@@ -180,7 +180,7 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
     }
   }
 
-  if (authLoading || !user) {
+  if (checking || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

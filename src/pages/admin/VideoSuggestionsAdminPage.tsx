@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Lightbulb, ThumbsUp, Check, X, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAdminGuard } from '../../lib/admin';
 
 interface VideoSuggestion {
   id: string;
@@ -17,7 +17,7 @@ interface VideoSuggestion {
 }
 
 export function VideoSuggestionsAdminPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, checking } = useAdminGuard();
   const [suggestions, setSuggestions] = useState<VideoSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
@@ -25,14 +25,14 @@ export function VideoSuggestionsAdminPage() {
   const [editNotes, setEditNotes] = useState('');
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!checking && (!user || !isAdmin)) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!authLoading && user) {
+    if (!checking && user && isAdmin) {
       loadSuggestions();
     }
-  }, [user, authLoading]);
+  }, [user, checking, isAdmin]);
 
   async function loadSuggestions() {
     setLoading(true);
@@ -127,7 +127,7 @@ export function VideoSuggestionsAdminPage() {
     rejected: suggestions.filter(s => s.status === 'rejected').length,
   };
 
-  if (authLoading || !user) {
+  if (checking || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

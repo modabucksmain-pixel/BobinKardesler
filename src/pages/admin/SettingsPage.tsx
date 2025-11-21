@@ -1,24 +1,24 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Save, ArrowLeft, RefreshCw } from 'lucide-react';
+import { useAdminGuard } from '../../lib/admin';
 
 export function SettingsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, checking } = useAdminGuard();
   const [youtubeApiKey, setYoutubeApiKey] = useState('');
   const [youtubeChannelId, setYoutubeChannelId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!checking && (!user || !isAdmin)) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!authLoading && user) {
+    if (!checking && user && isAdmin) {
       loadSettings();
     }
-  }, [user, authLoading]);
+  }, [user, checking, isAdmin]);
 
   async function loadSettings() {
     setLoading(true);
@@ -79,7 +79,7 @@ export function SettingsPage() {
     alert('Önbellek temizlendi! Veriler yeniden yüklenecek.');
   }
 
-  if (authLoading || !user) {
+  if (checking || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

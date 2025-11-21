@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Bell, Edit, Plus, Trash2, ToggleLeft, ToggleRight, Clock } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { supabase } from '../../lib/supabase';
+import { useAdminGuard } from '../../lib/admin';
 
 interface Announcement {
   id: string;
@@ -16,7 +16,7 @@ interface Announcement {
 }
 
 export function AnnouncementsAdminPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, checking } = useAdminGuard();
   const { success, error: showError } = useNotification();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,14 +43,14 @@ export function AnnouncementsAdminPage() {
   }, [showError]);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!checking && (!user || !isAdmin)) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!authLoading && user) {
+    if (!checking && user && isAdmin) {
       loadAnnouncements();
     }
-  }, [user, authLoading, loadAnnouncements]);
+  }, [user, checking, isAdmin, loadAnnouncements]);
 
   async function handleDelete(id: string) {
     if (!confirm('Bu duyuruyu silmek istediğinizden emin misiniz?')) return;
@@ -83,7 +83,7 @@ export function AnnouncementsAdminPage() {
     loadAnnouncements();
   }
 
-  if (authLoading || !user) {
+  if (checking || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

@@ -1,23 +1,23 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { getAllSubscribers, type NewsletterSubscriber } from '../../lib/newsletter';
 import { Mail, ArrowLeft, Download, Users, Copy, Send } from 'lucide-react';
+import { useAdminGuard } from '../../lib/admin';
 
 export function NewsletterAdminPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, checking } = useAdminGuard();
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!checking && (!user || !isAdmin)) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!authLoading && user) {
+    if (!checking && user && isAdmin) {
       loadSubscribers();
     }
-  }, [user, authLoading]);
+  }, [user, checking, isAdmin]);
 
   async function loadSubscribers() {
     setLoading(true);
@@ -57,7 +57,7 @@ export function NewsletterAdminPage() {
     link.click();
   }
 
-  if (authLoading || !user) {
+  if (checking || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
