@@ -18,7 +18,6 @@ export function Navbar() {
     { href: '/projeler', label: 'Projeler' },
     { href: '/blog', label: 'Blog' },
     { href: '/duyurular', label: 'Duyurular' },
-    { href: '/forum', label: 'Forum' },
     { href: '/topluluk', label: 'Topluluk' },
     { href: '/anketler', label: 'Anketler' },
     { href: '/cekilisler', label: 'Çekilişler' },

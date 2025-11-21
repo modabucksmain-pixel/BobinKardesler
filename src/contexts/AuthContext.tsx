@@ -7,9 +7,6 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any | null }>;
-  linkGoogleAccount: () => Promise<{ error: any | null }>;
-  isGoogleLinked: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -19,10 +16,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const isGoogleLinked = Boolean(
-    session?.user?.app_metadata?.provider === 'google' ||
-      session?.user?.identities?.some((identity: { provider?: string }) => identity?.provider === 'google')
-  );
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -51,38 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/forum`,
-        queryParams: {
-          prompt: 'select_account',
-        },
-      },
-    });
-
-    return { error };
-  };
-
-  const linkGoogleAccount = async () => {
-    const { error } = await supabase.auth.linkIdentity({ provider: 'google' });
-    return { error };
-  };
-
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signIn,
-        signInWithGoogle,
-        linkGoogleAccount,
-        isGoogleLinked,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={{ user, session, loading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

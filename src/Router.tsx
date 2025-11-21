@@ -27,7 +27,6 @@ import { NewsletterAdminPage } from './pages/admin/NewsletterAdminPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { ForumPage } from './pages/ForumPage';
 
 export function Router() {
   const [path, setPath] = useState(window.location.pathname);
@@ -71,8 +70,6 @@ export function Router() {
     content = <ProjectsPage />;
   } else if (path === '/anketler') {
     content = <PollsPage />;
-  } else if (path === '/forum') {
-    content = <ForumPage />;
   } else if (path === '/duyurular') {
     content = <AnnouncementsPage />;
   } else if (path === '/hakkimizda') {
