@@ -27,7 +27,10 @@ import { NewsletterAdminPage } from './pages/admin/NewsletterAdminPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { ForumPage } from './pages/ForumPage';
+import { ForumLandingPage } from './pages/forum/ForumLandingPage';
+import { ForumCategoryPage } from './pages/forum/ForumCategoryPage';
+import { ForumForumPage } from './pages/forum/ForumForumPage';
+import { ForumThreadPage } from './pages/forum/ForumThreadPage';
 
 export function Router() {
   const [path, setPath] = useState(window.location.pathname);
@@ -72,7 +75,19 @@ export function Router() {
   } else if (path === '/anketler') {
     content = <PollsPage />;
   } else if (path === '/forum') {
-    content = <ForumPage />;
+    content = <ForumLandingPage />;
+  } else if (path.startsWith('/forum/konu/')) {
+    const slugAndId = decodeURIComponent(path.replace('/forum/konu/', ''));
+    content = <ForumThreadPage slugAndId={slugAndId} />;
+  } else if (path.startsWith('/forum/kategori/')) {
+    const parts = path.replace('/forum/kategori/', '').split('/').filter(Boolean);
+    if (parts.length >= 2) {
+      content = <ForumForumPage categorySlug={parts[0]} forumSlug={parts[1]} />;
+    } else if (parts.length === 1) {
+      content = <ForumCategoryPage categorySlug={parts[0]} />;
+    } else {
+      content = <ForumLandingPage />;
+    }
   } else if (path === '/duyurular') {
     content = <AnnouncementsPage />;
   } else if (path === '/hakkimizda') {
