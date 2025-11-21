@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BarChart3, Plus, Edit, Trash2, ArrowLeft, Users } from 'lucide-react';
+import { useAdminGuard } from '../../lib/admin';
 
 interface Poll {
   id: string;
@@ -21,21 +21,21 @@ interface PollOption {
 }
 
 export function PollsAdminPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, checking } = useAdminGuard();
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingPoll, setEditingPoll] = useState<Poll | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!checking && (!user || !isAdmin)) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!authLoading && user) {
+    if (!checking && user && isAdmin) {
       loadPolls();
     }
-  }, [user, authLoading]);
+  }, [user, checking, isAdmin]);
 
   async function loadPolls() {
     setLoading(true);
@@ -77,7 +77,7 @@ export function PollsAdminPage() {
     return data?.reduce((sum, opt) => sum + opt.vote_count, 0) || 0;
   }
 
-  if (authLoading || !user) {
+  if (checking || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

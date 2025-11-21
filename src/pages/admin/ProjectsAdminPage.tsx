@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Wrench, Plus, Edit, Trash2, Eye, Heart, ArrowLeft, Star } from 'lucide-react';
+import { useAdminGuard } from '../../lib/admin';
 
 interface Project {
   id: string;
@@ -20,21 +20,21 @@ interface Project {
 }
 
 export function ProjectsAdminPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, checking } = useAdminGuard();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!checking && (!user || !isAdmin)) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!authLoading && user) {
+    if (!checking && user && isAdmin) {
       loadProjects();
     }
-  }, [user, authLoading]);
+  }, [user, checking, isAdmin]);
 
   async function loadProjects() {
     setLoading(true);
@@ -66,7 +66,7 @@ export function ProjectsAdminPage() {
     loadProjects();
   }
 
-  if (authLoading || !user) {
+  if (checking || !user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
