@@ -140,6 +140,7 @@ export function Navbar() {
           }`}
           onClick={() => setIsDrawerOpen(false)}
         />
+
         <div
           id="main-navigation-drawer"
           className={`absolute inset-0 overflow-hidden transform transition-transform duration-300 ease-in-out ${
