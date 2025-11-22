@@ -12,7 +12,7 @@ export function ForumCategoryPage({ categorySlug }: Props) {
         <ForumBreadcrumbs
           items={[
             { label: 'Forum', href: '/forum' },
-            { label: 'Kategori', href: '/forum/kategori' },
+            { label: 'Kategori', href: '/forum' },
             { label: categorySlug },
           ]}
           onNavigate={navigate}
@@ -22,6 +22,14 @@ export function ForumCategoryPage({ categorySlug }: Props) {
           <p className="mt-2 text-sm text-zinc-300">
             Seçilen kategorideki alt forum ve konular burada listelenecek.
           </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              onClick={() => navigate('/forum')}
+              className="inline-flex items-center rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:border-emerald-300/60 hover:text-emerald-100"
+            >
+              Foruma dön
+            </button>
+          </div>
         </div>
       </div>
     </div>

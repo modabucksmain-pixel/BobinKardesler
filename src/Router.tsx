@@ -81,6 +81,8 @@ export function Router() {
 
   } else if (path === '/forum') {
     content = <ForumLandingPage />;
+  } else if (path === '/forum/kategori') {
+    content = <ForumLandingPage />;
   } else if (path === '/forum/createforum' || path === '/forum/yeni-konu') {
     content = <ForumCreatePage />;
   } else if (path === '/forum/son-konular' || path === '/forum/konu/cevapsiz') {

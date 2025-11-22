@@ -23,6 +23,7 @@ import { getChannelStats, getLatestVideos, formatNumber, formatDate, type YouTub
 import { supabase } from '../lib/supabase';
 import { getPublishedAnnouncements, type Announcement } from '../lib/announcements';
 import { getCommunityPosts, type CommunityPost } from '../lib/community';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface BlogPost {
   id: string;
@@ -40,6 +41,8 @@ export function HomePage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { error: showError } = useNotification();
 
   const quickMenuItems = useMemo(
     () => [
@@ -101,29 +104,66 @@ export function HomePage() {
 
   async function loadData() {
     setLoading(true);
-    const [channelStats, latestVideos, blogData, announcementData, communityData] = await Promise.all([
-      getChannelStats(),
-      getLatestVideos(8),
-      supabase
-        .from('blog_posts')
-        .select('id, title, excerpt, featured_image, slug, published_at')
-        .eq('status', 'published')
-        .order('published_at', { ascending: false })
-        .limit(3),
-      getPublishedAnnouncements(3),
-      getCommunityPosts(3),
-    ]);
+    setErrorMessage(null);
 
-    setStats(channelStats);
-    setVideos(latestVideos);
-    if (blogData.data) setBlogPosts(blogData.data);
-    setAnnouncements(announcementData);
-    setCommunityPosts(communityData);
-    setLoading(false);
+    try {
+      const [channelStats, latestVideos, blogResult, announcementResult, communityData] = await Promise.all([
+        getChannelStats(),
+        getLatestVideos(8),
+        supabase
+          .from('blog_posts')
+          .select('id, title, excerpt, featured_image, slug, published_at')
+          .eq('status', 'published')
+          .order('published_at', { ascending: false })
+          .limit(3),
+        getPublishedAnnouncements(3),
+        getCommunityPosts(3),
+      ]);
+
+      let hasError = false;
+
+      setStats(channelStats);
+      setVideos(latestVideos);
+
+      if (blogResult.error) {
+        hasError = true;
+      } else if (blogResult.data) {
+        setBlogPosts(blogResult.data);
+      }
+
+      if (announcementResult.error) {
+        hasError = true;
+      } else {
+        setAnnouncements(announcementResult.data);
+      }
+
+      setCommunityPosts(communityData);
+
+      if (hasError) {
+        const message = 'Beklenmeyen bir hata oluştu, lütfen daha sonra tekrar dene.';
+        setErrorMessage(message);
+        showError(message);
+      }
+    } catch (error) {
+      console.error('Home page data load error', error);
+      const message = 'Beklenmeyen bir hata oluştu, lütfen daha sonra tekrar dene.';
+      setErrorMessage(message);
+      showError(message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="min-h-screen bg-zinc-950">
+
+      {errorMessage && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24">
+          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-100 p-4 text-sm">
+            {errorMessage}
+          </div>
+        </div>
+      )}
 
       <section className="relative py-16 lg:py-24">
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black" />
