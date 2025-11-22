@@ -140,20 +140,14 @@ export function AccountSettingsPage() {
             </div>
           </div>
 
-          {status && <p className="text-sm text-green-400">{status}</p>}
-          {error && <p className="text-sm text-red-400">{error}</p>}
+            {status && <p className="text-sm text-green-400">{status}</p>}
+            {error && <p className="text-sm text-red-400">{error}</p>}
 
-          <div className="flex flex-wrap gap-3 pt-2">
-            <AppLink
-              href="/forum"
-              className="inline-flex items-center px-4 py-2 rounded-lg border border-white/10 text-white hover:border-green-400/60 transition"
-            >
-              Forum'a dön
-            </AppLink>
-            <AppLink
-              href="/admin"
-              className="inline-flex items-center px-4 py-2 rounded-lg border border-white/10 text-white hover:border-green-400/60 transition"
-            >
+            <div className="flex flex-wrap gap-3 pt-2">
+              <AppLink
+                href="/admin"
+                className="inline-flex items-center px-4 py-2 rounded-lg border border-white/10 text-white hover:border-green-400/60 transition"
+              >
               Admin Paneli
             </AppLink>
           </div>
