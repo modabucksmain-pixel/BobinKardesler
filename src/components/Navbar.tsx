@@ -5,24 +5,13 @@ import { useAuth } from '../contexts/AuthContext';
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isExploreOpen, setIsExploreOpen] = useState(false);
   const { user, loading, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 12);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const contentLinks = [
@@ -68,12 +57,29 @@ export function Navbar() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setIsMenuOpen((open) => !open)}
+                onClick={() => setIsExploreOpen((open) => !open)}
+                className="hidden md:inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition hover:border-green-400/40 hover:bg-white/10"
+              >
+                {isExploreOpen ? (
+                  <>
+                    <X className="h-5 w-5" />
+                    Keşfet Panelini Kapat
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-5 w-5" />
+                    Keşfet Paneli
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsExploreOpen((open) => !open)}
                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition hover:border-green-400/40 hover:bg-white/10 md:hidden"
-                aria-expanded={isMenuOpen}
+                aria-expanded={isExploreOpen}
                 aria-controls="navbar-menu"
               >
-                {isMenuOpen ? (
+                {isExploreOpen ? (
                   <>
                     <X className="h-5 w-5" />
                     Kapat
@@ -95,19 +101,20 @@ export function Navbar() {
             </div>
           </div>
 
-          <div className="pb-6">
-            <div className="flex items-center justify-between pb-3">
-              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-green-200/80">
-                <Sparkles className="h-4 w-4" />
-                Keşfet
+          {isExploreOpen && (
+            <div className="pb-6">
+              <div className="flex items-center justify-between pb-3">
+                <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-green-200/80">
+                  <Sparkles className="h-4 w-4" />
+                  Keşfet
+                </div>
+                <div className="text-xs text-zinc-400 hidden md:block">Kaydırarak tüm bölümlere ulaş</div>
+                <div className="text-xs text-zinc-400 md:hidden">Keşif menüsünü aç</div>
               </div>
-              <div className="text-xs text-zinc-400 hidden md:block">Kaydırarak tüm bölümlere ulaş</div>
-              <div className="text-xs text-zinc-400 md:hidden">Keşif menüsünü aç</div>
-            </div>
 
             <div
               id="navbar-menu"
-              className={`${isMenuOpen ? 'flex' : 'hidden'} flex-col gap-4 rounded-2xl border border-white/10 bg-black/30 p-4 md:flex md:flex-row md:gap-4 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:overflow-x-auto md:pb-2 md:scrollbar-thin md:scrollbar-thumb-green-500/50 md:scrollbar-track-zinc-900/80 md:snap-x md:snap-mandatory`}
+              className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-black/30 p-4 md:flex md:flex-row md:gap-4 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:overflow-x-auto md:pb-2 md:scrollbar-thin md:scrollbar-thumb-green-500/50 md:scrollbar-track-zinc-900/80 md:snap-x md:snap-mandatory"
             >
               <div className="snap-start w-full min-w-0 rounded-2xl border border-zinc-800/60 bg-zinc-900/95 p-4 shadow-xl md:min-w-[260px] md:w-auto">
                 <div className="flex items-center justify-between text-xs uppercase tracking-wide text-zinc-400">
@@ -254,7 +261,8 @@ export function Navbar() {
                 </div>
               </div>
             </div>
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </header>
