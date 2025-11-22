@@ -23,8 +23,6 @@ export function Navbar() {
   ];
 
   const communityLinks = [
-    { href: '/forum', label: 'Forum' },
-    { href: '/forum/son-konular', label: 'Son Konular' },
     { href: '/topluluk', label: 'Topluluk' },
     { href: '/anketler', label: 'Anketler' },
     { href: '/cekilisler', label: 'Çekilişler' },
@@ -275,11 +273,11 @@ export function Navbar() {
                         </div>
                         <p className="text-lg font-bold text-white">Güncel duyurular ve topluluk etkinliklerini kaçırma.</p>
                         <p className="text-sm text-green-100/80">
-                          Blog yazıları, videolar ve forumdaki yeni başlıkları tek bir geniş panelden keşfet. Menüyü kapatmadan içeriklere hızlıca geçiş yap.
+                          Blog yazıları, videolar ve topluluk duyurularını tek bir geniş panelden keşfet. Menüyü kapatmadan içeriklere hızlıca geçiş yap.
                         </p>
                       </div>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {['Duyurular', 'Forum', 'Projeler', 'Çekilişler'].map((item) => (
+                        {['Duyurular', 'Topluluk', 'Projeler', 'Çekilişler'].map((item) => (
                           <Link
                             key={item}
                             href={`/${item.toLowerCase()}`}
