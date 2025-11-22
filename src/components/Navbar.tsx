@@ -117,6 +117,7 @@ export function Navbar() {
                   <Sparkles className="h-4 w-4" />
                   Hesap ve Kısayollar
                 </div>
+                <p className="mt-2 text-sm text-green-100/80">Giriş yaparak kişiselleştirilmiş içerikleri ve forum özelliklerini aç.</p>
                 <div className="mt-3 grid grid-cols-1 gap-2">
                   {!loading && (
                     <>
@@ -142,19 +143,6 @@ export function Navbar() {
                         </>
                       ) : (
                         <>
-                    <div className="flex flex-col gap-4 rounded-2xl border border-green-500/30 bg-green-500/10 p-4 shadow-lg shadow-green-500/20">
-                      <div className="space-y-2">
-                        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-green-200">
-                          <Sparkles className="h-4 w-4" />
-                          Yeni İçerikler
-                        </div>
-                        <p className="text-lg font-bold text-white">Güncel duyurular ve topluluk etkinliklerini kaçırma.</p>
-                        <p className="text-sm text-green-100/80">
-                          Blog yazıları, videolar ve topluluk duyurularını tek bir geniş panelden keşfet. Menüyü kapatmadan içeriklere hızlıca geçiş yap.
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {['Duyurular', 'Topluluk', 'Projeler', 'Çekilişler'].map((item) => (
                           <Link
                             href="/login"
                             className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:border-green-400/60 hover:bg-white/10"
