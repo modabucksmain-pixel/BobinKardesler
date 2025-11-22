@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Eye,
   ThumbsUp,
@@ -16,6 +16,8 @@ import {
   BookOpen,
   Trophy,
   Megaphone,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { getChannelStats, getLatestVideos, formatNumber, formatDate, type YouTubeVideo, type ChannelStats } from '../lib/youtube';
 import { supabase } from '../lib/supabase';
@@ -38,6 +40,36 @@ export function HomePage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const quickMenuItems = useMemo(
+    () => [
+      {
+        href: '/topluluk',
+        title: 'Topluluk meydanı',
+        description: 'Duyurular, buluşmalar ve ekip içi güncellemeler',
+        icon: <Megaphone className="w-5 h-5" />,
+      },
+      {
+        href: '/video-fikirleri',
+        title: 'Fikir gönder',
+        description: 'Atölye gündemine öneri veya problem ekle',
+        icon: <Sparkles className="w-5 h-5" />,
+      },
+      {
+        href: '/cekilisler',
+        title: 'Çekilişlere katıl',
+        description: 'Devam eden ödül havuzlarını ve katılım şartlarını gör',
+        icon: <Trophy className="w-5 h-5" />,
+      },
+      {
+        href: '/duyurular',
+        title: 'Duyurular',
+        description: 'Yeni yayınlar, canlı yayın takvimi ve stüdyo günlüğü',
+        icon: <Bell className="w-5 h-5" />,
+      },
+    ],
+    [],
+  );
 
   const learningTracks = useMemo(
     () => [
@@ -195,12 +227,7 @@ export function HomePage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <QuickLink href="/topluluk" icon={<Megaphone className="w-4 h-4" />} title="Topluluk meydanı" />
-                <QuickLink href="/video-fikirleri" icon={<Sparkles className="w-4 h-4" />} title="Fikir gönder" />
-                <QuickLink href="/cekilisler" icon={<Trophy className="w-4 h-4" />} title="Çekilişlere katıl" />
-                <QuickLink href="/duyurular" icon={<Bell className="w-4 h-4" />} title="Duyurular" />
-              </div>
+              <ScrollableMenu items={quickMenuItems} />
             </div>
           </div>
       </section>
@@ -559,17 +586,135 @@ function BlogCard({ post, index }: { post: BlogPost; index: number }) {
   );
 }
 
-function QuickLink({ href, icon, title }: { href: string; icon: React.ReactNode; title: string }) {
+interface MenuItem {
+  href: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+function ScrollableMenu({ items }: { items: MenuItem[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateActiveIndex = () => {
+      const children = Array.from(container.children) as HTMLElement[];
+      if (children.length === 0) return;
+
+      const containerCenter = container.scrollLeft + container.clientWidth / 2;
+      const nearestIndex = children.reduce(
+        (closest, child, index) => {
+          const childCenter = child.offsetLeft + child.offsetWidth / 2;
+          const distance = Math.abs(containerCenter - childCenter);
+          return distance < closest.distance ? { index, distance } : closest;
+        },
+        { index: 0, distance: Infinity },
+      ).index;
+
+      setActiveIndex(nearestIndex);
+    };
+
+    updateActiveIndex();
+    container.addEventListener('scroll', updateActiveIndex, { passive: true });
+    return () => container.removeEventListener('scroll', updateActiveIndex);
+  }, [items.length]);
+
+  const scrollToIndex = (index: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const target = container.children[index] as HTMLElement | undefined;
+    if (!target) return;
+
+    const offset = target.offsetLeft - container.offsetLeft;
+    container.scrollTo({ left: offset, behavior: 'smooth' });
+  };
+
+  const handlePrevious = () => scrollToIndex(Math.max(0, activeIndex - 1));
+  const handleNext = () => scrollToIndex(Math.min(items.length - 1, activeIndex + 1));
+
   return (
-    <a
-      href={href}
-      className="flex items-center justify-between px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-900/70 text-zinc-200 hover:border-green-500/40 hover:text-green-300 transition-all duration-300"
-    >
-      <div className="flex items-center space-x-3">
-        <div className="w-9 h-9 rounded-lg bg-green-500/10 text-green-400 flex items-center justify-center">{icon}</div>
-        <span className="font-semibold">{title}</span>
+    <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 shadow-inner">
+      <div className="flex items-center justify-between gap-3 pb-3">
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.25em] text-zinc-400">
+          <Sparkles className="h-4 w-4 text-green-400" />
+          <span>Hızlı geçiş</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handlePrevious}
+            disabled={activeIndex === 0}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition hover:border-green-400/50 hover:text-green-200 disabled:opacity-40"
+            aria-label="Önceki kısayol"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handleNext}
+            disabled={activeIndex === items.length - 1}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition hover:border-green-400/50 hover:text-green-200 disabled:opacity-40"
+            aria-label="Sonraki kısayol"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
-      <ArrowUpRight className="w-4 h-4" />
-    </a>
+
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-zinc-950 via-zinc-950/70 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-zinc-950 via-zinc-950/70 to-transparent" />
+
+        <div
+          ref={containerRef}
+          className="scrollbar-hidden flex gap-3 overflow-x-auto pb-2 pr-2 snap-x snap-mandatory"
+          aria-label="Kısayol menüsü"
+        >
+          {items.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="group relative min-w-[230px] snap-center rounded-xl border border-white/10 bg-white/5 p-4 text-left transition hover:-translate-y-0.5 hover:border-green-400/40"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-500/10 text-green-400 shadow-inner">
+                  {item.icon}
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-zinc-400 transition group-hover:text-green-300" />
+              </div>
+              <div className="mt-3 space-y-1">
+                <p className="text-sm font-semibold text-white">{item.title}</p>
+                <p className="text-xs text-zinc-400 leading-relaxed">{item.description}</p>
+              </div>
+              <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition group-hover:opacity-100">
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/10" />
+                <div className="absolute inset-0 rounded-xl border border-green-500/20" />
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-center gap-2">
+        {items.map((item, index) => (
+          <button
+            key={item.href}
+            type="button"
+            onClick={() => scrollToIndex(index)}
+            className={`h-2.5 rounded-full transition ${
+              activeIndex === index
+                ? 'w-6 bg-green-400 shadow shadow-green-500/30'
+                : 'w-2 bg-zinc-700 hover:bg-zinc-500'
+            }`}
+            aria-label={`${item.title} bağlantısına git`}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
