@@ -1,5 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BadgeCheck, CheckCircle2, Eye, Filter, Flag, Send, Tag, Timer, TrendingUp } from 'lucide-react';
+import {
+  BadgeCheck,
+  CheckCircle2,
+  Eye,
+  Filter,
+  Flag,
+  Info,
+  Layers,
+  Paperclip,
+  Send,
+  Shield,
+  Tag,
+  Timer,
+  TrendingUp,
+} from 'lucide-react';
 import { ForumThemeToggle } from '../../components/forum/ForumThemeToggle';
 import {
   buildThreadPath,
@@ -19,6 +33,13 @@ interface Props {
   forumSlug: string;
 }
 
+function parseTags(input: string) {
+  return input
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
 export function ForumForumPage({ categorySlug, forumSlug }: Props) {
   const { user, loading: authLoading, isGoogleLinked, signInWithGoogle, linkGoogleAccount } = useAuth();
   const notification = useNotification();
@@ -31,7 +52,9 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [tagsInput, setTagsInput] = useState('');
   const [titleInput, setTitleInput] = useState('');
+  const [summaryInput, setSummaryInput] = useState('');
   const [bodyInput, setBodyInput] = useState('');
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     document.body.dataset.forumTheme = (localStorage.getItem('bk-forum-theme') as 'dark' | 'light' | null) ?? 'dark';
@@ -80,6 +103,7 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
   }, [threads, statusFilter, searchTerm, sort]);
 
   const availableTags = useMemo(() => Array.from(new Set(threads.flatMap((thread) => thread.tags))).slice(0, 12), [threads]);
+  const previewTags = useMemo(() => parseTags(tagsInput).slice(0, 6), [tagsInput]);
 
   const ensureGoogleConnection = async () => {
     if (authLoading) {
@@ -119,16 +143,22 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
       return;
     }
 
-    const tagList = tagsInput
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter(Boolean);
+    const tagList = parseTags(tagsInput);
+
+    if (!titleInput.trim() || !summaryInput.trim() || !bodyInput.trim()) {
+      setFormError('Başlık, özet ve içerik alanları boş bırakılamaz.');
+      return;
+    }
+
+    setFormError('');
+
+    const composedBody = summaryInput ? `${summaryInput}\n\n${bodyInput}` : bodyInput;
 
     const { error: createError } = await createForumThread({
       forum_id: forum.id,
       title: titleInput,
       slug: null,
-      body: bodyInput,
+      body: composedBody,
       tags: tagList,
       status: 'open',
       created_by: user.id,
@@ -147,6 +177,7 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
     setTitleInput('');
     setBodyInput('');
     setTagsInput('');
+    setSummaryInput('');
     notification.success('Yeni başlık yayınlandı!');
     await loadThreads(forum.id);
   }
@@ -344,37 +375,100 @@ export function ForumForumPage({ categorySlug, forumSlug }: Props) {
               </div>
             </div>
 
-            <form onSubmit={handleCreateThread} className="space-y-3">
-              <input
-                type="text"
-                placeholder="Başlık (ör. ESP32 Wi-Fi kopma sorunu)"
-                value={titleInput}
-                onChange={(e) => setTitleInput(e.target.value)}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-green-500"
-              />
-              <textarea
-                placeholder="Sorunu detaylıca anlat, denediğin adımları yaz."
-                value={bodyInput}
-                onChange={(e) => setBodyInput(e.target.value)}
-                required
-                rows={5}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-green-500 resize-none"
-              />
-              <input
-                type="text"
-                placeholder="Etiketler (virgülle ayır: esp32, wifi, güç)"
-                value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-green-500"
-              />
+            <div className="space-y-3 mb-4">
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-amber-50 text-sm flex gap-2">
+                <Shield className="w-4 h-4 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Topluluk kuralları</p>
+                  <p className="text-amber-100/90">Kişisel bilgileri paylaşma, konu dışına çıkma ve spam içerik göndermeden kaçın.</p>
+                </div>
+              </div>
+              <div className="rounded-xl border border-blue-400/30 bg-blue-500/10 p-3 text-blue-50 text-sm flex gap-2">
+                <Info className="w-4 h-4 mt-0.5" />
+                <div>
+                  <p className="font-semibold">İpucu</p>
+                  <p className="text-blue-100/90">Önce benzer başlıkları arayarak tekrar açılan konulardan kaçın, eklediğin etiketler aramalarda öne çıkar.</p>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleCreateThread} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-green-400" /> Başlık
+                </label>
+                <input
+                  type="text"
+                  placeholder="Başlık (ör. ESP32 Wi-Fi kopma sorunu)"
+                  value={titleInput}
+                  onChange={(e) => setTitleInput(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-green-500"
+                />
+                <p className="text-xs forum-muted">Sorunu kısa ve net ifade eden bir başlık seç.</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-white">Kısa Özet</label>
+                <input
+                  type="text"
+                  placeholder="Tek cümlede sorun/amacı özetle"
+                  value={summaryInput}
+                  onChange={(e) => setSummaryInput(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-green-500"
+                />
+                <p className="text-xs forum-muted">Bu özet, konunun üst kısmında görünecek ve diğerlerinin hızlıca anlamasına yardımcı olur.</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Paperclip className="w-4 h-4 text-green-400" /> Detaylar
+                </label>
+                <textarea
+                  placeholder="Sorunu detaylıca anlat, denediğin adımları yaz. Gerekirse link veya ekran görüntüsü referansları ekle."
+                  value={bodyInput}
+                  onChange={(e) => setBodyInput(e.target.value)}
+                  required
+                  rows={5}
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-green-500 resize-none"
+                />
+                <p className="text-xs forum-muted">Eklenti yükleyemiyorsan, paylaştığın dosyaların linkini (örn. GitHub, Gist) ekle.</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-green-400" /> Etiketler
+                </label>
+                <input
+                  type="text"
+                  placeholder="Etiketler (virgülle ayır: esp32, wifi, güç)"
+                  value={tagsInput}
+                  onChange={(e) => setTagsInput(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:border-green-500"
+                />
+                <div className="flex flex-wrap gap-2">
+                  {previewTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="forum-chip px-3 py-1 rounded-full bg-white/5 text-zinc-100 border border-white/10 text-xs"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-xs forum-muted">En fazla 5-6 etiket ekle, her biri konu başlığını ve donanımı temsil etsin.</p>
+              </div>
+
+              {formError && <p className="text-sm text-amber-200">{formError}</p>}
+
               <button
                 type="submit"
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-500 text-zinc-950 font-bold hover:bg-green-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={!titleInput || !bodyInput}
+                disabled={!titleInput.trim() || !summaryInput.trim() || !bodyInput.trim() || !isGoogleLinked}
               >
                 <Send className="w-5 h-5" />
-                Başlık Oluştur
+                {isGoogleLinked ? 'Başlık Oluştur' : 'Önce Google doğrula'}
               </button>
             </form>
           </div>
