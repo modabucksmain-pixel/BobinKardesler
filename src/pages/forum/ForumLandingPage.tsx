@@ -28,14 +28,7 @@ export function ForumLandingPage() {
   }
 
   function handleCreateForum() {
-    const categoryWithForum = categories.find((category) => category.forums.length > 0);
-    if (categoryWithForum) {
-      const firstForum = categoryWithForum.forums[0];
-      navigate(`/forum/kategori/${categoryWithForum.slug}/${firstForum.slug}#forum-olustur`);
-      return;
-    }
-
-    navigate('/forum/son-konular');
+    navigate('/forum/createforum');
   }
 
   return (
