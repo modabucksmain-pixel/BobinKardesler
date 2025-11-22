@@ -26,15 +26,8 @@ import { ProjectsAdminPage } from './pages/admin/ProjectsAdminPage';
 import { PollsAdminPage } from './pages/admin/PollsAdminPage';
 import { NewsletterAdminPage } from './pages/admin/NewsletterAdminPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
-import { ForumAdminPage } from './pages/admin/ForumAdminPage';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { ForumLandingPage } from './pages/forum/ForumLandingPage';
-import { ForumCategoryPage } from './pages/forum/ForumCategoryPage';
-import { ForumForumPage } from './pages/forum/ForumForumPage';
-import { ForumThreadPage } from './pages/forum/ForumThreadPage';
-import { ForumLatestPage } from './pages/forum/ForumLatestPage';
-import { ForumCreatePage } from './pages/forum/ForumCreatePage';
 import { AccountSettingsPage } from './pages/AccountSettingsPage';
 
 export function Router() {
@@ -79,6 +72,7 @@ export function Router() {
     content = <ProjectsPage />;
   } else if (path === '/anketler') {
     content = <PollsPage />;
+<<<<<<< HEAD
   } else if (path === '/forum') {
     content = <ForumLandingPage />;
   } else if (path === '/forum/createforum' || path === '/forum/yeni-konu') {
@@ -98,6 +92,8 @@ export function Router() {
     } else {
       content = <ForumLandingPage />;
     }
+=======
+>>>>>>> origin/main
   } else if (path === '/duyurular') {
     content = <AnnouncementsPage />;
   } else if (path === '/hakkimizda') {
@@ -131,8 +127,6 @@ export function Router() {
     content = <ProjectsAdminPage />;
   } else if (path === '/admin/polls') {
     content = <PollsAdminPage />;
-  } else if (path === '/admin/forum') {
-    content = <ForumAdminPage />;
   } else if (path === '/admin/newsletter') {
     content = <NewsletterAdminPage />;
   } else if (path === '/admin/settings') {
