@@ -29,12 +29,12 @@ import { SettingsPage } from './pages/admin/SettingsPage';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { AccountSettingsPage } from './pages/AccountSettingsPage';
-import { ForumLandingPage } from './pages/forum/ForumLandingPage';
+import { ForumCategoryPage } from './pages/forum/ForumCategoryPage';
 import { ForumCreatePage } from './pages/forum/ForumCreatePage';
+import { ForumForumPage } from './pages/forum/ForumForumPage';
+import { ForumLandingPage } from './pages/forum/ForumLandingPage';
 import { ForumLatestPage } from './pages/forum/ForumLatestPage';
 import { ForumThreadPage } from './pages/forum/ForumThreadPage';
-import { ForumForumPage } from './pages/forum/ForumForumPage';
-import { ForumCategoryPage } from './pages/forum/ForumCategoryPage';
 
 export function Router() {
   const [path, setPath] = useState(window.location.pathname);
