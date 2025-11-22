@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Eye,
   ThumbsUp,
@@ -596,10 +596,37 @@ interface MenuItem {
 function ScrollableMenu({ items }: { items: MenuItem[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const scrollToIndex = useCallback(
+    (index: number) => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const target = container.children[index] as HTMLElement | undefined;
+      if (!target) return;
+
+      const offset = target.offsetLeft - container.offsetLeft;
+      container.scrollTo({ left: offset, behavior: 'smooth' });
+    },
+    [containerRef],
+  );
+
+  const handlePrevious = useCallback(
+    () => scrollToIndex(Math.max(0, activeIndex - 1)),
+    [activeIndex, scrollToIndex],
+  );
+
+  const handleNext = useCallback(
+    () => scrollToIndex(Math.min(items.length - 1, activeIndex + 1)),
+    [activeIndex, items.length, scrollToIndex],
+  );
 
   useEffect(() => {
+    if (!isOpen) return undefined;
+
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) return undefined;
 
     const updateActiveIndex = () => {
       const children = Array.from(container.children) as HTMLElement[];
@@ -621,25 +648,18 @@ function ScrollableMenu({ items }: { items: MenuItem[] }) {
     updateActiveIndex();
     container.addEventListener('scroll', updateActiveIndex, { passive: true });
     return () => container.removeEventListener('scroll', updateActiveIndex);
-  }, [items.length]);
+  }, [items.length, isOpen]);
 
-  const scrollToIndex = (index: number) => {
-    const container = containerRef.current;
-    if (!container) return;
+  useEffect(() => {
+    if (!isOpen) return undefined;
 
-    const target = container.children[index] as HTMLElement | undefined;
-    if (!target) return;
-
-    const offset = target.offsetLeft - container.offsetLeft;
-    container.scrollTo({ left: offset, behavior: 'smooth' });
-  };
-
-  const handlePrevious = () => scrollToIndex(Math.max(0, activeIndex - 1));
-  const handleNext = () => scrollToIndex(Math.min(items.length - 1, activeIndex + 1));
+    const raf = requestAnimationFrame(() => scrollToIndex(activeIndex));
+    return () => cancelAnimationFrame(raf);
+  }, [activeIndex, isOpen, scrollToIndex]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 shadow-inner">
-      <div className="flex items-center justify-between gap-3 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.25em] text-zinc-400">
           <Sparkles className="h-4 w-4 text-green-400" />
           <span>Hızlı geçiş</span>
@@ -647,58 +667,82 @@ function ScrollableMenu({ items }: { items: MenuItem[] }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handlePrevious}
-            disabled={activeIndex === 0}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition hover:border-green-400/50 hover:text-green-200 disabled:opacity-40"
-            aria-label="Önceki kısayol"
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="rounded-lg border border-green-500/50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-green-200 transition hover:bg-green-500/10"
+            aria-expanded={isOpen}
+            aria-controls="quick-menu-slider"
           >
-            <ChevronLeft className="h-4 w-4" />
+            {isOpen ? 'Paneli Kapat' : 'Paneli Aç'}
           </button>
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={activeIndex === items.length - 1}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition hover:border-green-400/50 hover:text-green-200 disabled:opacity-40"
-            aria-label="Sonraki kısayol"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-zinc-950 via-zinc-950/70 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-zinc-950 via-zinc-950/70 to-transparent" />
-
-        <div
-          ref={containerRef}
-          className="scrollbar-hidden flex gap-3 overflow-x-auto pb-2 pr-2 snap-x snap-mandatory"
-          aria-label="Kısayol menüsü"
-        >
-          {items.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="group relative min-w-[230px] snap-center rounded-xl border border-white/10 bg-white/5 p-4 text-left transition hover:-translate-y-0.5 hover:border-green-400/40"
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrevious}
+              disabled={!isOpen || activeIndex === 0}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition hover:border-green-400/50 hover:text-green-200 disabled:opacity-40"
+              aria-label="Önceki kısayol"
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-500/10 text-green-400 shadow-inner">
-                  {item.icon}
-                </div>
-                <ArrowUpRight className="h-4 w-4 text-zinc-400 transition group-hover:text-green-300" />
-              </div>
-              <div className="mt-3 space-y-1">
-                <p className="text-sm font-semibold text-white">{item.title}</p>
-                <p className="text-xs text-zinc-400 leading-relaxed">{item.description}</p>
-              </div>
-              <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition group-hover:opacity-100">
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/10" />
-                <div className="absolute inset-0 rounded-xl border border-green-500/20" />
-              </div>
-            </a>
-          ))}
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!isOpen || activeIndex === items.length - 1}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition hover:border-green-400/50 hover:text-green-200 disabled:opacity-40"
+              aria-label="Sonraki kısayol"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
+
+      {isOpen ? (
+        <div className="relative" id="quick-menu-slider">
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-zinc-950 via-zinc-950/70 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-zinc-950 via-zinc-950/70 to-transparent" />
+
+          <div
+            ref={containerRef}
+            className="scrollbar-hidden flex gap-3 overflow-x-auto pb-2 pr-2 snap-x snap-mandatory"
+            aria-label="Kısayol menüsü"
+          >
+            {items.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="group relative min-w-[230px] snap-center rounded-xl border border-white/10 bg-white/5 p-4 text-left transition hover:-translate-y-0.5 hover:border-green-400/40"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-500/10 text-green-400 shadow-inner">
+                    {item.icon}
+                  </div>
+                  <ArrowUpRight className="h-4 w-4 text-zinc-400 transition group-hover:text-green-300" />
+                </div>
+                <div className="mt-3 space-y-1">
+                  <p className="text-sm font-semibold text-white">{item.title}</p>
+                  <p className="text-xs text-zinc-400 leading-relaxed">{item.description}</p>
+                </div>
+                <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition group-hover:opacity-100">
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/10" />
+                  <div className="absolute inset-0 rounded-xl border border-green-500/20" />
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-200">
+          <div className="flex items-center gap-3">
+            <Sparkles className="h-5 w-5 text-green-400" />
+            <div className="space-y-0.5">
+              <p className="font-semibold text-white">Kısayol paneli kapalı</p>
+              <p className="text-xs text-zinc-300">Paneli açarak kaydırılabilir menüdeki tüm bağlantıları kullanabilirsin.</p>
+            </div>
+          </div>
+          <ArrowUpRight className="h-4 w-4 text-green-300" />
+        </div>
+      )}
 
       <div className="mt-3 flex items-center justify-center gap-2">
         {items.map((item, index) => (
@@ -706,11 +750,12 @@ function ScrollableMenu({ items }: { items: MenuItem[] }) {
             key={item.href}
             type="button"
             onClick={() => scrollToIndex(index)}
+            disabled={!isOpen}
             className={`h-2.5 rounded-full transition ${
-              activeIndex === index
+              activeIndex === index && isOpen
                 ? 'w-6 bg-green-400 shadow shadow-green-500/30'
                 : 'w-2 bg-zinc-700 hover:bg-zinc-500'
-            }`}
+            } ${!isOpen ? 'opacity-50' : ''}`}
             aria-label={`${item.title} bağlantısına git`}
           />
         ))}
