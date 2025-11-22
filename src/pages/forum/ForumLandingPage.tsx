@@ -38,7 +38,7 @@ export function ForumLandingPage() {
   }
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 pb-12 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black">
+    <div className="min-h-screen pt-28 sm:pt-32 pb-12 bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3 shadow-sm forum-card">

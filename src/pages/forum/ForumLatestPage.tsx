@@ -5,7 +5,7 @@ import { navigate } from '../../lib/navigation';
 
 export function ForumLatestPage() {
   return (
-    <div className="min-h-screen bg-zinc-950 pt-24 pb-12 text-white">
+    <div className="min-h-screen bg-zinc-950 pt-28 sm:pt-32 pb-12 text-white">
       <div className="mx-auto max-w-5xl px-4 space-y-6">
         <ForumBreadcrumbs
           items={[
