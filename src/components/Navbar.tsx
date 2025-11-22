@@ -117,6 +117,7 @@ export function Navbar() {
                   <Sparkles className="h-4 w-4" />
                   Hesap ve Kısayollar
                 </div>
+                <p className="mt-2 text-sm text-green-100/80">Giriş yaparak kişiselleştirilmiş içerikleri ve forum özelliklerini aç.</p>
                 <div className="mt-3 grid grid-cols-1 gap-2">
                   {!loading && (
                     <>
