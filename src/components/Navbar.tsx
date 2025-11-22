@@ -16,6 +16,7 @@ export function Navbar() {
   }, []);
 
   const contentLinks = [
+    { href: '/forum', label: 'Forum' },
     { href: '/videos', label: 'Videolar' },
     { href: '/blog', label: 'Blog' },
     { href: '/projeler', label: 'Projeler' },

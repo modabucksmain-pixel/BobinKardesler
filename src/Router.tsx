@@ -81,12 +81,13 @@ export function Router() {
     content = <PollsPage />;
   } else if (path === '/forum') {
     content = <ForumLandingPage />;
-  } else if (path === '/forum/createforum') {
+  } else if (path === '/forum/createforum' || path === '/forum/yeni-konu') {
     content = <ForumCreatePage />;
   } else if (path === '/forum/son-konular' || path === '/forum/konu/cevapsiz') {
     content = <ForumLatestPage />;
   } else if (path.startsWith('/forum/konu/')) {
-    const slugAndId = decodeURIComponent(path.replace('/forum/konu/', ''));
+    const cleanedPath = path.replace(/\/?yanit?$/, '');
+    const slugAndId = decodeURIComponent(cleanedPath.replace('/forum/konu/', ''));
     content = <ForumThreadPage slugAndId={slugAndId} />;
   } else if (path.startsWith('/forum/kategori/')) {
     const parts = path.replace('/forum/kategori/', '').split('/').filter(Boolean);

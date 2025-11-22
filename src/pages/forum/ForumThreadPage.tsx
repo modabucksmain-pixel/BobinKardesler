@@ -17,6 +17,7 @@ import { formatDate } from '../../lib/youtube';
 import { navigate } from '../../lib/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import { ForumPostCard } from '../../components/forum/ForumPostCard';
 
 interface Props {
   slugAndId: string;
@@ -294,42 +295,13 @@ export function ForumThreadPage({ slugAndId }: Props) {
                   <div className="text-center text-slate-500 py-6 bg-white border border-slate-200 rounded-2xl">Henüz yanıt yok.</div>
                 ) : (
                   replies.map((reply) => (
-                    <div
-                      key={reply.id}
-                      className={`rounded-2xl border p-4 space-y-2 shadow-sm ${
-                        reply.is_solution
-                          ? 'border-emerald-300 bg-emerald-50'
-                          : reply.is_admin_response
-                            ? 'border-blue-200 bg-blue-50'
-                            : 'border-slate-200 bg-white'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {reply.is_admin_response ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
-                              <ShieldCheck className="w-4 h-4" /> Admin yanıtı
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                              <MessageCircle className="w-4 h-4" /> Kullanıcı yanıtı
-                            </span>
-                          )}
-                          {reply.is_solution && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                              <CheckCircle2 className="w-4 h-4" /> Çözüm
-                            </span>
-                          )}
-                          <button
-                            onClick={() => setQuote(reply.body)}
-                            className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold rounded-full border border-slate-200 text-blue-700 hover:bg-blue-50"
-                          >
-                            <Quote className="w-3 h-3" /> Alıntıla
-                          </button>
-                        </div>
-                        <p className="text-xs text-slate-500">{formatDate(reply.created_at)}</p>
-                      </div>
-                      <p className="text-sm text-slate-800 whitespace-pre-line leading-relaxed">{reply.body}</p>
+                    <div key={reply.id} className="space-y-2">
+                      <ForumPostCard
+                        reply={reply}
+                        likes={likes[reply.id] || 0}
+                        onLike={() => handleLike(reply.id)}
+                        onQuote={(resp) => setQuote(resp.body)}
+                      />
                       {canModerate && !reply.is_solution && (
                         <button
                           onClick={() => handleMarkSolution(reply)}
@@ -338,20 +310,6 @@ export function ForumThreadPage({ slugAndId }: Props) {
                           <CheckCircle2 className="w-4 h-4" /> Çözüm olarak işaretle
                         </button>
                       )}
-                      <div className="flex items-center gap-3 text-xs text-slate-600">
-                        <button
-                          onClick={() => handleLike(reply.id)}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-slate-200 hover:bg-blue-50 text-blue-700"
-                        >
-                          <Heart className="w-3 h-3" /> {likes[reply.id] || 0}
-                        </button>
-                        <button
-                          onClick={() => notification.info('Şikayet kaydedildi.')}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-amber-200 text-amber-700 hover:bg-amber-50"
-                        >
-                          <Flag className="w-3 h-3" /> Şikayet et
-                        </button>
-                      </div>
                     </div>
                   ))
                 )}
