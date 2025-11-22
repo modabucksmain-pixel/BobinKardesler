@@ -72,7 +72,7 @@ export function Router() {
     content = <ProjectsPage />;
   } else if (path === '/anketler') {
     content = <PollsPage />;
-<<<<<<< HEAD
+
   } else if (path === '/forum') {
     content = <ForumLandingPage />;
   } else if (path === '/forum/createforum' || path === '/forum/yeni-konu') {
@@ -92,8 +92,6 @@ export function Router() {
     } else {
       content = <ForumLandingPage />;
     }
-=======
->>>>>>> origin/main
   } else if (path === '/duyurular') {
     content = <AnnouncementsPage />;
   } else if (path === '/hakkimizda') {
