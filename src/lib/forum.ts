@@ -318,3 +318,28 @@ export function getLatestThreads(limit = 12): ForumThread[] {
     .sort((a, b) => new Date(b.last_activity_at).getTime() - new Date(a.last_activity_at).getTime())
     .slice(0, limit);
 }
+
+export function getSimilarThreads({
+  forumId,
+  categoryId,
+  excludeId,
+  limit = 6,
+}: {
+  forumId?: string;
+  categoryId?: string;
+  excludeId?: string;
+  limit?: number;
+}): ForumThread[] {
+  const threads = getLatestThreads(30);
+
+  return threads
+    .filter((thread) => {
+      if (excludeId && thread.id === excludeId) return false;
+      if (forumId && thread.forum_id !== forumId) return false;
+      if (!forumId && categoryId) {
+        return thread.category?.id === categoryId;
+      }
+      return true;
+    })
+    .slice(0, limit);
+}
