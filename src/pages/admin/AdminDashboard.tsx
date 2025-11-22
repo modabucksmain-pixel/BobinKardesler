@@ -185,13 +185,6 @@ export function AdminDashboard() {
         />
 
         <ActionCard
-          title="Forum Yapısı"
-          description="Forum kategorilerini ve alt forumları düzenle"
-          icon={<MessageSquare className="w-8 h-8" />}
-          actions={[{ label: 'Forum Yönetimi', href: '/admin/forum' }]}
-        />
-
-        <ActionCard
           title="Site Duyuruları"
           description="Ana sayfa duyurularını yönet ve yayınla"
           icon={<Bell className="w-8 h-8" />}

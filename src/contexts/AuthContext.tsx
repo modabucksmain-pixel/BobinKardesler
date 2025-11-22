@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  const signInWithGoogle = async (redirectPath = '/forum') => {
+    const signInWithGoogle = async (redirectPath = '/account') => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
