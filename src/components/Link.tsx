@@ -1,3 +1,5 @@
+import type React from 'react';
+
 interface LinkProps {
   href: string;
   children: React.ReactNode;
@@ -7,6 +9,11 @@ interface LinkProps {
 
 export function Link({ href, children, className = '', onClick }: LinkProps) {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const isPrimaryButton = e.button === 0;
+    const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+
+    if (!isPrimaryButton || hasModifier) return;
+
     e.preventDefault();
     onClick?.();
     window.history.pushState({}, '', href);
