@@ -1,36 +1,25 @@
-import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
-type ThemeMode = 'dark' | 'light';
+import { Moon, Sun } from 'lucide-react';
 
 export function ForumThemeToggle() {
-  const [theme, setTheme] = useState<ThemeMode>('dark');
-
-  useEffect(() => {
-    const stored = (localStorage.getItem('bk-forum-theme') as ThemeMode | null) ?? 'dark';
-    setTheme(stored);
-    document.body.dataset.forumTheme = stored;
-  }, []);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('bk-forum-theme') as 'dark' | 'light' | null) ?? 'dark';
+  });
 
   useEffect(() => {
     document.body.dataset.forumTheme = theme;
     localStorage.setItem('bk-forum-theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-
-  const Icon = theme === 'dark' ? Sun : Moon;
-  const label = theme === 'dark' ? 'Aydınlık moda geç' : 'Karanlık moda geç';
-
   return (
     <button
       type="button"
-      onClick={toggleTheme}
-      className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white transition hover:border-emerald-300/60"
-      aria-label={label}
+      onClick={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+      className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:border-emerald-300/60 hover:text-emerald-100"
+      aria-label="Forum temasını değiştir"
     >
-      <Icon className="w-4 h-4" />
-      <span className="text-sm font-semibold hidden sm:inline">{label}</span>
+      {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+      <span>{theme === 'dark' ? 'Koyu mod' : 'Aydınlık mod'}</span>
     </button>
   );
 }
