@@ -72,6 +72,28 @@ export function Router() {
     content = <ProjectsPage />;
   } else if (path === '/anketler') {
     content = <PollsPage />;
+<<<<<<< HEAD
+  } else if (path === '/forum') {
+    content = <ForumLandingPage />;
+  } else if (path === '/forum/createforum' || path === '/forum/yeni-konu') {
+    content = <ForumCreatePage />;
+  } else if (path === '/forum/son-konular' || path === '/forum/konu/cevapsiz') {
+    content = <ForumLatestPage />;
+  } else if (path.startsWith('/forum/konu/')) {
+    const cleanedPath = path.replace(/\/?yanit?$/, '');
+    const slugAndId = decodeURIComponent(cleanedPath.replace('/forum/konu/', ''));
+    content = <ForumThreadPage slugAndId={slugAndId} />;
+  } else if (path.startsWith('/forum/kategori/')) {
+    const parts = path.replace('/forum/kategori/', '').split('/').filter(Boolean);
+    if (parts.length >= 2) {
+      content = <ForumForumPage categorySlug={parts[0]} forumSlug={parts[1]} />;
+    } else if (parts.length === 1) {
+      content = <ForumCategoryPage categorySlug={parts[0]} />;
+    } else {
+      content = <ForumLandingPage />;
+    }
+=======
+>>>>>>> origin/main
   } else if (path === '/duyurular') {
     content = <AnnouncementsPage />;
   } else if (path === '/hakkimizda') {
