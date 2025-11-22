@@ -233,33 +233,35 @@ export function Navbar() {
                       </div>
 
                       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/20">
+                        <div className="space-y-3 rounded-2xl border border-zinc-800/60 bg-zinc-900/95 p-3 shadow-xl min-w-[260px]">
                           <div className="text-xs uppercase tracking-wide text-zinc-400">İçerik</div>
-                          <div className="space-y-1">
+                          <div className="space-y-2">
                             {contentLinks.map((link) => (
                               <Link
                                 key={link.href}
                                 href={link.href}
                                 onClick={() => setIsDrawerOpen(false)}
-                                className="block rounded-xl px-4 py-3 text-base font-semibold text-white transition hover:bg-white/5"
+                                className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 md:text-base"
                               >
                                 {link.label}
+                                <Sparkles className="h-4 w-4 text-green-300" />
                               </Link>
                             ))}
                           </div>
                         </div>
 
-                        <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/20">
+                        <div className="space-y-3 rounded-2xl border border-zinc-800/60 bg-zinc-900/95 p-3 shadow-xl min-w-[260px]">
                           <div className="text-xs uppercase tracking-wide text-zinc-400">Topluluk</div>
-                          <div className="space-y-1">
+                          <div className="space-y-2">
                             {communityLinks.map((link) => (
                               <Link
                                 key={link.href}
                                 href={link.href}
                                 onClick={() => setIsDrawerOpen(false)}
-                                className="block rounded-xl px-4 py-3 text-base font-semibold text-white transition hover:bg-white/5"
+                                className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 md:text-base"
                               >
                                 {link.label}
+                                <Sparkles className="h-4 w-4 text-green-300" />
                               </Link>
                             ))}
                           </div>
