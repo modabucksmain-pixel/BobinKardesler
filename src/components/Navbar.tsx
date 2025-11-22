@@ -146,11 +146,13 @@ export function Navbar() {
             isDrawerOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
+          <div className="flex h-full w-full items-start justify-center px-2 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8">
           <div className="flex h-full w-full items-center px-2 sm:px-4 md:px-6">
             <div
               ref={drawerRef}
               role="dialog"
               aria-modal="true"
+              className="relative flex h-full max-h-[calc(100vh-2rem)] w-full max-w-6xl lg:max-w-7xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2xl shadow-green-500/10 backdrop-blur-2xl sm:max-h-[calc(100vh-3rem)] md:max-h-[calc(100vh-4rem)]"
               className="relative flex h-[96%] w-full max-w-6xl lg:max-w-7xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2xl shadow-green-500/10 backdrop-blur-2xl"
             >
               <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
