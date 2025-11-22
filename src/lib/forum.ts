@@ -13,6 +13,8 @@ export interface ForumForum {
   description?: string;
 }
 
+export type ForumThreadStatus = 'open' | 'in_progress' | 'resolved';
+
 export interface ForumThread {
   id: string;
   title: string;
@@ -25,6 +27,8 @@ export interface ForumThread {
   reply_count?: number;
   is_locked?: boolean;
   view_count?: number;
+  status?: ForumThreadStatus;
+  google_connected?: boolean;
 }
 
 export interface ForumReply {
@@ -65,6 +69,8 @@ const threads: ForumThread[] = [
     reply_count: 2,
     created_by: 'admin',
     view_count: 120,
+    status: 'in_progress',
+    google_connected: true,
   },
   {
     id: 'thread-2',
@@ -76,6 +82,7 @@ const threads: ForumThread[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
     reply_count: 4,
     view_count: 85,
+    status: 'open',
   },
   {
     id: 'thread-3',
@@ -87,6 +94,7 @@ const threads: ForumThread[] = [
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
     reply_count: 1,
     view_count: 40,
+    status: 'resolved',
   },
 ];
 
@@ -182,6 +190,55 @@ export function getSimilarThreads({
 export function getUserForumRole(userId: string): Promise<'admin' | 'moderator' | 'user'> {
   if (userId === 'admin') return Promise.resolve('admin');
   return Promise.resolve('user');
+}
+
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    .slice(0, 60);
+}
+
+export function createForumThread({
+  title,
+  body,
+  category_id,
+  forum_id,
+  author_id,
+}: {
+  title: string;
+  body: string;
+  category_id: string;
+  forum_id: string;
+  author_id?: string;
+}): Promise<ServiceResult<ForumThread>> {
+  const category = categories.find((c) => c.id === category_id);
+  const forum = forums.find((f) => f.id === forum_id);
+
+  if (!category || !forum) {
+    return Promise.resolve({ data: null, error: new Error('Kategori veya forum bulunamadı') });
+  }
+
+  const thread: ForumThread = {
+    id: createId('thread'),
+    title,
+    body,
+    slug: slugify(title) || undefined,
+    category,
+    forum,
+    created_at: new Date().toISOString(),
+    reply_count: 0,
+    view_count: 0,
+    created_by: author_id,
+    status: 'open',
+  };
+
+  threads.unshift(thread);
+
+  return Promise.resolve({ data: thread, error: null });
 }
 
 export function incrementThreadViewCount(threadId: string) {
