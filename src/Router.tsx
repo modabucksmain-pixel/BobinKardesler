@@ -34,6 +34,7 @@ import { ForumCategoryPage } from './pages/forum/ForumCategoryPage';
 import { ForumForumPage } from './pages/forum/ForumForumPage';
 import { ForumThreadPage } from './pages/forum/ForumThreadPage';
 import { ForumLatestPage } from './pages/forum/ForumLatestPage';
+import { ForumCreatePage } from './pages/forum/ForumCreatePage';
 import { AccountSettingsPage } from './pages/AccountSettingsPage';
 
 export function Router() {
@@ -80,6 +81,8 @@ export function Router() {
     content = <PollsPage />;
   } else if (path === '/forum') {
     content = <ForumLandingPage />;
+  } else if (path === '/forum/createforum') {
+    content = <ForumCreatePage />;
   } else if (path === '/forum/son-konular' || path === '/forum/konu/cevapsiz') {
     content = <ForumLatestPage />;
   } else if (path.startsWith('/forum/konu/')) {
