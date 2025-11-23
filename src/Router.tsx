@@ -28,6 +28,7 @@ import { NewsletterAdminPage } from './pages/admin/NewsletterAdminPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { SiteShell } from './components/SiteShell';
 import { AccountSettingsPage } from './pages/AccountSettingsPage';
 import { ForumCategoryPage } from './pages/forum/ForumCategoryPage';
 import { ForumCreatePage } from './pages/forum/ForumCreatePage';
@@ -154,11 +155,17 @@ export function Router() {
     );
   }
 
-  return (
+  const pageContent = (
     <>
       {showLayout && <Navbar />}
       {content}
       {showLayout && !isAdminPage && <Footer />}
     </>
   );
+
+  if (isAdminPage) {
+    return pageContent;
+  }
+
+  return <SiteShell>{pageContent}</SiteShell>;
 }
