@@ -7,13 +7,11 @@ import { ForumCategoryList } from '../../components/forum/ForumCategoryList';
 import { ForumThreadList } from '../../components/forum/ForumThreadList';
 import { ForumBreadcrumbs } from '../../components/forum/ForumBreadcrumbs';
 import { ForumNotificationBell } from '../../components/forum/ForumNotificationBell';
-import { useAuth } from '../../contexts/AuthContext';
 
 export function ForumLandingPage() {
   const [categories, setCategories] = useState<(ForumCategory & { forums: ForumForum[] })[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const { canPostToForum } = useAuth();
 
   useEffect(() => {
     document.title = 'Forum | Bobin Kardeşler';
@@ -100,7 +98,6 @@ export function ForumLandingPage() {
                   </button>
                   <button
                     onClick={handleCreateForum}
-                    disabled={!canPostToForum}
                     className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/60 bg-emerald-500/20 px-4 py-2 font-semibold text-emerald-100 hover:border-emerald-300 hover:bg-emerald-500/30 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     <PlusCircle className="h-4 w-4" /> Forum oluştur
