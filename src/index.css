@@ -4,13 +4,14 @@
 
 @layer base {
   :root {
-    --background-color: #f5f7fb;
+    --background-color: #050a08;
+    --foreground-color: #e5e7eb;
   }
 
   body {
     background-color: var(--background-color);
-    color: #0f172a;
-    @apply text-slate-900;
+    color: var(--foreground-color);
+    @apply text-zinc-100;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     transition: background-color 300ms ease, color 200ms ease;
   }
