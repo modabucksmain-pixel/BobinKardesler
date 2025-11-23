@@ -106,11 +106,13 @@ export function AccountSettingsPage() {
     );
   }
 
+  const placeholderHref = '/yakinda';
+
   const actionItems = [
-    { label: 'Haber akışı', description: 'Toplulukta olup bitenleri gör', icon: Activity, href: '/community' },
-    { label: 'Alınan ifadeler', description: 'Sana gelen etkileşimler', icon: MessageSquare, action: () => setStatus('Alınan ifadeler yakında burada listelenecek.') },
-    { label: 'Tüm içeriğiniz', description: 'Paylaştığın gönderiler', icon: Hash, action: () => setStatus('Tüm içeriklerinin listesi hazırlanıyor.') },
-    { label: 'Bildirimler', description: 'Uyarı ve hatırlatmalar', icon: Bell, action: () => setStatus('Bildirim merkezine yönlendiriliyorsun.') },
+    { label: 'Haber akışı', description: 'Toplulukta olup bitenleri gör', icon: Activity, href: '/topluluk' },
+    { label: 'Alınan ifadeler', description: 'Sana gelen etkileşimler', icon: MessageSquare, href: placeholderHref },
+    { label: 'Tüm içeriğiniz', description: 'Paylaştığın gönderiler', icon: Hash, href: placeholderHref },
+    { label: 'Bildirimler', description: 'Uyarı ve hatırlatmalar', icon: Bell, href: placeholderHref },
     {
       label: 'Hesap detayları',
       description: 'Profil bilgilerini düzenle',
@@ -129,11 +131,11 @@ export function AccountSettingsPage() {
         setStatus('Bağlı hesaplar bölümüne gidildi.');
       },
     },
-    { label: 'Şifre ve güvenlik', description: 'Giriş seçeneklerini kontrol et', icon: ShieldCheck, action: () => setStatus('Şifre ve güvenlik ayarları yakında eklenecek.') },
-    { label: 'Takip ettiklerim', description: 'Favori hesapların', icon: User, action: () => setStatus('Takip ettiklerin yakında görüntülenebilir olacak.') },
-    { label: 'Gizlilik', description: 'Görünürlük tercihleri', icon: Eye, action: () => setStatus('Gizlilik seçenekleri yakında eklenecek.') },
-    { label: 'Kara liste', description: 'Engellediğin kullanıcılar', icon: Ban, action: () => setStatus('Kara listen buradan yönetilebilecek.') },
-    { label: 'Sosyal seçenekler', description: 'Paylaşım ve bağlantılar', icon: Share2, action: () => setStatus('Sosyal seçenekler yakında aktif olacak.') },
+    { label: 'Şifre ve güvenlik', description: 'Giriş seçeneklerini kontrol et', icon: ShieldCheck, href: placeholderHref },
+    { label: 'Takip ettiklerim', description: 'Favori hesapların', icon: User, href: placeholderHref },
+    { label: 'Gizlilik', description: 'Görünürlük tercihleri', icon: Eye, href: placeholderHref },
+    { label: 'Kara liste', description: 'Engellediğin kullanıcılar', icon: Ban, href: placeholderHref },
+    { label: 'Sosyal seçenekler', description: 'Paylaşım ve bağlantılar', icon: Share2, href: placeholderHref },
     { label: 'Çıkış', description: 'Oturumu kapat', icon: LogOut, action: handleSignOut },
   ];
 
