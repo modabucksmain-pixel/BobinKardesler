@@ -26,34 +26,42 @@ export interface GiveawayParticipant {
 }
 
 export async function getActiveGiveaways(): Promise<Giveaway[]> {
-  const { data, error } = await supabase
-    .from('giveaways')
-    .select('*')
-    .eq('status', 'active')
-    .lte('start_date', new Date().toISOString())
-    .gte('end_date', new Date().toISOString())
-    .order('created_at', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('giveaways')
+      .select('*')
+      .eq('status', 'active')
+      .lte('start_date', new Date().toISOString())
+      .gte('end_date', new Date().toISOString())
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching giveaways:', error);
-    return [];
+    if (error) {
+      throw error;
+    }
+
+    const giveawaysWithCounts = await Promise.all(
+      (data || []).map(async (giveaway) => {
+        const { count, error: countError } = await supabase
+          .from('giveaway_participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('giveaway_id', giveaway.id);
+
+        if (countError) {
+          throw countError;
+        }
+
+        return {
+          ...giveaway,
+          participant_count: count || 0,
+        };
+      })
+    );
+
+    return giveawaysWithCounts;
+  } catch (err) {
+    console.error('Error fetching giveaways:', err);
+    throw err instanceof Error ? err : new Error('Unknown giveaways error');
   }
-
-  const giveawaysWithCounts = await Promise.all(
-    (data || []).map(async (giveaway) => {
-      const { count } = await supabase
-        .from('giveaway_participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('giveaway_id', giveaway.id);
-
-      return {
-        ...giveaway,
-        participant_count: count || 0,
-      };
-    })
-  );
-
-  return giveawaysWithCounts;
 }
 
 export async function getAllGiveaways(): Promise<Giveaway[]> {
