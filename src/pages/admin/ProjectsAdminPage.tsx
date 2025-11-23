@@ -298,7 +298,9 @@ function ProjectModal({
               <label className="block text-sm font-medium text-zinc-300 mb-2">Zorluk Seviyesi</label>
               <select
                 value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as any)}
+                onChange={(e) =>
+                  setDifficulty(e.target.value as 'beginner' | 'intermediate' | 'advanced')
+                }
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-green-500 text-zinc-100"
               >
                 <option value="beginner">Başlangıç</option>

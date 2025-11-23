@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { User, Session } from '@supabase/supabase-js';
+import type { User, Session, AuthError } from '@supabase/supabase-js';
 
 type Role = 'admin' | 'moderator' | 'user';
 
@@ -15,10 +15,10 @@ interface AuthContextType {
   profile: Profile | null;
   role: Role;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string) => Promise<{ error: any | null }>;
-  signInWithGoogle: (redirectPath?: string) => Promise<{ error: any | null }>;
-  linkGoogleAccount: () => Promise<{ error: any | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signInWithGoogle: (redirectPath?: string) => Promise<{ error: AuthError | null }>;
+  linkGoogleAccount: () => Promise<{ error: AuthError | null }>;
   isGoogleLinked: boolean;
   isGoogleUser: boolean;
   hasRole: (role: Role) => boolean;
@@ -156,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

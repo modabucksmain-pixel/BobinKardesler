@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export async function trackEvent(eventType: string, metadata: Record<string, any> = {}) {
+export async function trackEvent(eventType: string, metadata: Record<string, unknown> = {}) {
   await supabase.from('site_analytics').insert({
     event_type: eventType,
     metadata,

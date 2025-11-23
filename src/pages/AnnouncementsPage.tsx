@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Bell, Calendar, ArrowUpRight } from 'lucide-react';
 import { getPublishedAnnouncements, type Announcement } from '../lib/announcements';
 import { formatDate } from '../lib/youtube';
@@ -11,11 +11,7 @@ export function AnnouncementsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { error: showError } = useNotification();
 
-  useEffect(() => {
-    loadAnnouncements();
-  }, []);
-
-  async function loadAnnouncements() {
+  const loadAnnouncements = useCallback(async () => {
     setLoading(true);
     setErrorMessage(null);
 
@@ -31,7 +27,11 @@ export function AnnouncementsPage() {
     }
 
     setLoading(false);
-  }
+  }, [showError]);
+
+  useEffect(() => {
+    loadAnnouncements();
+  }, [loadAnnouncements]);
 
   return (
     <PageLayout

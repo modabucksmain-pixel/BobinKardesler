@@ -58,8 +58,12 @@ export function AccountSettingsPage() {
     try {
       await signOut();
       window.location.href = '/';
-    } catch (err: any) {
-      setError(err?.message ?? 'Çıkış yapılamadı');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message ?? 'Çıkış yapılamadı');
+      } else {
+        setError('Çıkış yapılamadı');
+      }
     } finally {
       setBusy(false);
     }

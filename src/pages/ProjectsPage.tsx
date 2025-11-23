@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Wrench, Github, Play, Heart, Eye, Filter } from 'lucide-react';
 import { getAllProjects, type Project, difficultyLabels, difficultyColors } from '../lib/projects';
 
@@ -9,22 +9,14 @@ export function ProjectsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
-
-  useEffect(() => {
-    filterProjects();
-  }, [projects, selectedCategory, selectedDifficulty]);
-
-  async function loadProjects() {
+  const loadProjects = useCallback(async () => {
     setLoading(true);
     const data = await getAllProjects();
     setProjects(data);
     setLoading(false);
-  }
+  }, []);
 
-  function filterProjects() {
+  const filterProjects = useCallback(() => {
     let filtered = [...projects];
 
     if (selectedCategory !== 'all') {
@@ -36,7 +28,15 @@ export function ProjectsPage() {
     }
 
     setFilteredProjects(filtered);
-  }
+  }, [projects, selectedCategory, selectedDifficulty]);
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
+
+  useEffect(() => {
+    filterProjects();
+  }, [filterProjects]);
 
   const categories = [...new Set(projects.map(p => p.category))];
 
