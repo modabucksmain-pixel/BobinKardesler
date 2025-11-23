@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BarChart3, Check, Clock } from 'lucide-react';
 import { getActivePolls, voteOnPoll, hasUserVoted, type PollWithOptions } from '../lib/polls';
 import { formatDate } from '../lib/youtube';
@@ -8,19 +8,14 @@ export function PollsPage() {
   const [loading, setLoading] = useState(true);
   const [votedPolls, setVotedPolls] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    loadPolls();
-    loadVotedPolls();
-  }, []);
-
-  async function loadPolls() {
+  const loadPolls = useCallback(async () => {
     setLoading(true);
     const data = await getActivePolls();
     setPolls(data);
     setLoading(false);
-  }
+  }, []);
 
-  async function loadVotedPolls() {
+  const loadVotedPolls = useCallback(async () => {
     const userIp = await getUserIP();
     const voted = new Set<string>();
 
@@ -32,7 +27,12 @@ export function PollsPage() {
     }
 
     setVotedPolls(voted);
-  }
+  }, [polls]);
+
+  useEffect(() => {
+    loadPolls();
+    loadVotedPolls();
+  }, [loadPolls, loadVotedPolls]);
 
   async function getUserIP(): Promise<string> {
     try {

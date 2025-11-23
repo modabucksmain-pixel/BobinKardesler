@@ -1,18 +1,5 @@
-import { useEffect, useState } from 'react';
-import {
-  ArrowLeft,
-  BadgeCheck,
-  CheckCircle2,
-  Eye,
-  Flag,
-  Heart,
-  Lock,
-  MessageCircle,
-  Quote,
-  Send,
-  ShieldCheck,
-  Timer,
-} from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { ArrowLeft, BadgeCheck, CheckCircle2, Heart, Lock, MessageCircle, Quote, Send, ShieldCheck, Timer, Flag, Eye } from 'lucide-react';
 import { ForumThemeToggle } from '../../components/forum/ForumThemeToggle';
 import {
   buildThreadPath,
@@ -26,7 +13,6 @@ import {
   type ForumReply,
   type ForumThread,
 } from '../../lib/forum';
-import { formatDate } from '../../lib/youtube';
 import { navigate } from '../../lib/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -65,20 +51,18 @@ export function ForumThreadPage({ slugAndId }: Props) {
 
   const canModerate = role === 'admin' || role === 'moderator';
 
-  useEffect(() => {
-    document.body.dataset.forumTheme = (localStorage.getItem('bk-forum-theme') as 'dark' | 'light' | null) ?? 'dark';
-    loadThread();
+  const loadReplies = useCallback(async () => {
+    setLoadingReplies(true);
+    const { data, error: repliesError } = await getForumReplies(threadId);
+    if (repliesError || !data) {
+      setError('Yanıtlar yüklenemedi.');
+    } else {
+      setReplies(data);
+    }
+    setLoadingReplies(false);
   }, [threadId]);
 
-  useEffect(() => {
-    if (user?.id) {
-      getUserForumRole(user.id).then((userRole) => {
-        if (userRole) setRole(userRole);
-      });
-    }
-  }, [user?.id]);
-
-  async function loadThread() {
+  const loadThread = useCallback(async () => {
     setLoadingThread(true);
     const { data, error: fetchError } = await getForumThreadById(threadId);
     if (fetchError || !data) {
@@ -100,18 +84,20 @@ export function ForumThreadPage({ slugAndId }: Props) {
     incrementThreadViewCount(threadId);
     setLoadingThread(false);
     await loadReplies();
-  }
+  }, [loadReplies, threadId]);
 
-  async function loadReplies() {
-    setLoadingReplies(true);
-    const { data, error: repliesError } = await getForumReplies(threadId);
-    if (repliesError || !data) {
-      setError('Yanıtlar yüklenemedi.');
-    } else {
-      setReplies(data);
+  useEffect(() => {
+    document.body.dataset.forumTheme = (localStorage.getItem('bk-forum-theme') as 'dark' | 'light' | null) ?? 'dark';
+    loadThread();
+  }, [loadThread]);
+
+  useEffect(() => {
+    if (user?.id) {
+      getUserForumRole(user.id).then((userRole) => {
+        if (userRole) setRole(userRole);
+      });
     }
-    setLoadingReplies(false);
-  }
+  }, [user?.id]);
 
   const ensureGoogleConnection = async () => {
     if (authLoading) {

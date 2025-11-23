@@ -29,12 +29,14 @@ export function SettingsPage() {
 
     if (data) {
       data.forEach((setting) => {
-        const value = setting.value as any;
-        if (setting.key === 'youtube_api_key' && value?.api_key) {
-          setYoutubeApiKey(value.api_key);
+        const value = setting.value as { api_key?: string; channel_id?: string } | string | null;
+        if (setting.key === 'youtube_api_key') {
+          const apiKey = typeof value === 'string' ? value : value?.api_key;
+          if (apiKey) setYoutubeApiKey(apiKey);
         }
-        if (setting.key === 'youtube_channel_id' && value?.channel_id) {
-          setYoutubeChannelId(value.channel_id);
+        if (setting.key === 'youtube_channel_id') {
+          const channelId = typeof value === 'string' ? value : value?.channel_id;
+          if (channelId) setYoutubeChannelId(channelId);
         }
       });
     }

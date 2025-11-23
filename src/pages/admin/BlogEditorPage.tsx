@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Save, ArrowLeft, FileText } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -37,34 +37,7 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
 
   const readingTime = useMemo(() => calculateReadingTime(post.content), [post.content]);
 
-  useEffect(() => {
-    if (!checking && (!user || !isAdmin)) {
-      window.location.href = '/admin/login';
-      return;
-    }
-    if (!checking && user && isAdmin && postId) {
-      loadPost();
-    } else if (!checking && user && isAdmin) {
-      const savedDraft = localStorage.getItem(draftKey);
-      if (savedDraft) {
-        try {
-          const parsed = JSON.parse(savedDraft) as BlogPost;
-          setPost(parsed);
-          info('Kaydedilmemiş taslak geri yüklendi');
-        } catch (e) {
-          console.error('Taslak yüklenemedi', e);
-        }
-      }
-    }
-  }, [user, checking, isAdmin, postId, draftKey, info]);
-
-  useEffect(() => {
-    if (!checking && user && isAdmin && !postId) {
-      localStorage.setItem(draftKey, JSON.stringify(post));
-    }
-  }, [post, draftKey, checking, user, isAdmin, postId]);
-
-  async function loadPost() {
+  const loadPost = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
       .from('blog_posts')
@@ -84,7 +57,34 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
       });
     }
     setLoading(false);
-  }
+  }, [postId]);
+
+  useEffect(() => {
+    if (!checking && (!user || !isAdmin)) {
+      window.location.href = '/admin/login';
+      return;
+    }
+    if (!checking && user && isAdmin && postId) {
+      loadPost();
+    } else if (!checking && user && isAdmin) {
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft) as BlogPost;
+          setPost(parsed);
+          info('Kaydedilmemiş taslak geri yüklendi');
+        } catch (e) {
+          console.error('Taslak yüklenemedi', e);
+        }
+      }
+    }
+  }, [user, checking, isAdmin, postId, draftKey, info, loadPost]);
+
+  useEffect(() => {
+    if (!checking && user && isAdmin && !postId) {
+      localStorage.setItem(draftKey, JSON.stringify(post));
+    }
+  }, [post, draftKey, checking, user, isAdmin, postId]);
 
   function generateSlug(title: string): string {
     return title
