@@ -35,6 +35,7 @@ import { ForumForumPage } from './pages/forum/ForumForumPage';
 import { ForumLandingPage } from './pages/forum/ForumLandingPage';
 import { ForumLatestPage } from './pages/forum/ForumLatestPage';
 import { ForumThreadPage } from './pages/forum/ForumThreadPage';
+import { ComingSoonPage } from './pages/ComingSoonPage';
 
 export function Router() {
   const [path, setPath] = useState(window.location.pathname);
@@ -106,6 +107,8 @@ export function Router() {
     content = <AboutPage />;
   } else if (path === '/account') {
     content = <AccountSettingsPage />;
+  } else if (path === '/yakinda') {
+    content = <ComingSoonPage />;
   } else if (path === '/login') {
     content = <LoginPage redirectPath="/account" />;
   } else if (path === '/register') {
