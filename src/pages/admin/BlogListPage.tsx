@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { FileText, Edit, Trash2, Eye, Calendar, Plus, ArrowLeft } from 'lucide-react';
 import { formatDate } from '../../lib/youtube';
@@ -22,17 +22,7 @@ export function BlogListPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
 
-  useEffect(() => {
-    if (!checking && (!user || !isAdmin)) {
-      window.location.href = '/admin/login';
-      return;
-    }
-    if (!checking && user && isAdmin) {
-      loadPosts();
-    }
-  }, [user, checking, isAdmin]);
-
-  async function loadPosts() {
+  const loadPosts = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('blog_posts')
@@ -45,7 +35,17 @@ export function BlogListPage() {
       setPosts(data);
     }
     setLoading(false);
-  }
+  }, [showError]);
+
+  useEffect(() => {
+    if (!checking && (!user || !isAdmin)) {
+      window.location.href = '/admin/login';
+      return;
+    }
+    if (!checking && user && isAdmin) {
+      loadPosts();
+    }
+  }, [user, checking, isAdmin, loadPosts]);
 
   async function handleDelete(id: string) {
     if (!confirm('Bu yazıyı silmek istediğinizden emin misiniz?')) return;

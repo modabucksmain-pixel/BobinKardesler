@@ -98,11 +98,7 @@ export function HomePage() {
     [],
   );
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setErrorMessage(null);
 
@@ -152,7 +148,11 @@ export function HomePage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [showError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   return (
     <div className="min-h-screen bg-zinc-950">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Gift, Calendar, Users, CheckCircle, Mail, User } from 'lucide-react';
 import { getActiveGiveaways, participateInGiveaway, type Giveaway } from '../lib/giveaways';
 import { useNotification } from '../contexts/NotificationContext';
@@ -9,11 +9,7 @@ export function GiveawaysPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { error: showError } = useNotification();
 
-  useEffect(() => {
-    loadGiveaways();
-  }, []);
-
-  async function loadGiveaways() {
+  const loadGiveaways = useCallback(async () => {
     setLoading(true);
     setErrorMessage(null);
 
@@ -28,7 +24,11 @@ export function GiveawaysPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [showError]);
+
+  useEffect(() => {
+    loadGiveaways();
+  }, [loadGiveaways]);
 
   return (
     <div className="min-h-screen pt-24 pb-20">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Lightbulb, ThumbsUp, Check, X, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAdminGuard } from '../../lib/admin';
@@ -24,17 +24,7 @@ export function VideoSuggestionsAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState('');
 
-  useEffect(() => {
-    if (!checking && (!user || !isAdmin)) {
-      window.location.href = '/admin/login';
-      return;
-    }
-    if (!checking && user && isAdmin) {
-      loadSuggestions();
-    }
-  }, [user, checking, isAdmin]);
-
-  async function loadSuggestions() {
+  const loadSuggestions = useCallback(async () => {
     setLoading(true);
     const query = supabase
       .from('video_suggestions')
@@ -51,13 +41,23 @@ export function VideoSuggestionsAdminPage() {
       setSuggestions(data);
     }
     setLoading(false);
-  }
+  }, [filter]);
+
+  useEffect(() => {
+    if (!checking && (!user || !isAdmin)) {
+      window.location.href = '/admin/login';
+      return;
+    }
+    if (!checking && user && isAdmin) {
+      loadSuggestions();
+    }
+  }, [user, checking, isAdmin, loadSuggestions]);
 
   useEffect(() => {
     if (user) {
       loadSuggestions();
     }
-  }, [filter, user]);
+  }, [filter, user, loadSuggestions]);
 
   async function updateStatus(id: string, status: string) {
     const { error } = await supabase
