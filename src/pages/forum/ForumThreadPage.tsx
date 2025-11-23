@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, BadgeCheck, CheckCircle2, Heart, Lock, MessageCircle, Quote, Send, ShieldCheck, Timer, Flag, Eye } from 'lucide-react';
 import { ForumThemeToggle } from '../../components/forum/ForumThemeToggle';
 import {
+  buildThreadPath,
   createForumReply,
   getForumReplies,
   getForumThreadById,
@@ -9,7 +10,6 @@ import {
   getUserForumRole,
   incrementThreadViewCount,
   markThreadSolved,
-  buildThreadPath,
   type ForumReply,
   type ForumThread,
 } from '../../lib/forum';
@@ -17,10 +17,18 @@ import { navigate } from '../../lib/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { ForumPostCard } from '../../components/forum/ForumPostCard';
+import { ForumBreadcrumbs } from '../../components/forum/ForumBreadcrumbs';
 
 interface Props {
   slugAndId: string;
 }
+
+const statusStyles: Record<ForumThread['status'] | 'unknown', string> = {
+  open: 'bg-emerald-500/15 text-emerald-100 border border-emerald-400/40',
+  in_progress: 'bg-amber-500/15 text-amber-100 border border-amber-400/40',
+  resolved: 'bg-blue-500/15 text-blue-100 border border-blue-400/40',
+  unknown: 'bg-white/10 text-white border border-white/20',
+};
 
 export function ForumThreadPage({ slugAndId }: Props) {
   const threadId = slugAndId.split('-').pop() || '';
@@ -66,7 +74,7 @@ export function ForumThreadPage({ slugAndId }: Props) {
     setThread(data);
     setSimilarThreads(
       getSimilarThreads({
-        forumId: data.forum_id,
+        forumId: data.forum?.id,
         categoryId: data.category?.id,
         excludeId: data.id,
       })
@@ -173,112 +181,123 @@ export function ForumThreadPage({ slugAndId }: Props) {
     await Promise.all([loadReplies(), loadThread()]);
   }
 
+  const breadcrumbItems = [
+    { label: 'Forum', href: '/forum' },
+    thread?.category?.slug
+      ? { label: thread.category.name, href: `/forum/kategori/${thread.category.slug}` }
+      : { label: 'Kategori' },
+    thread?.forum?.slug && thread?.category?.slug
+      ? { label: thread.forum.name, href: `/forum/kategori/${thread.category.slug}/${thread.forum.slug}` }
+      : { label: 'Forum' },
+    thread?.title ? { label: thread.title } : { label: 'Konu' },
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-100">
-      <div className="pt-28 sm:pt-32 pb-14">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
-          <div className="flex items-center justify-between gap-3 text-sm text-slate-700">
-            <button
-              onClick={() => navigate(`/forum/kategori/${thread?.category?.slug || 'kategori'}/${thread?.forum?.slug || 'forum'}`)}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white text-slate-700 border border-slate-200 shadow-sm hover:border-blue-200 hover:text-blue-700"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Foruma dön
-            </button>
-            <ForumThemeToggle />
-          </div>
-
-          {error && (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-800 text-sm">{error}</div>
-          )}
-
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm px-4 py-2">
-            <div className="flex items-center flex-wrap gap-2 text-sm font-semibold text-slate-700">
-              <a href="#thread" className="px-3 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700">
-                Konu
-              </a>
-              <a href="#replies" className="px-3 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700">
-                Mesajlar
-              </a>
-              <a href="#reply-form" className="px-3 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700">
-                Yanıt Yaz
-              </a>
-              <a href="#similar-topics" className="px-3 py-1 rounded-lg hover:bg-blue-50 hover:text-blue-700">
-                Benzer Konular
-              </a>
+    <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-white">
+      <div className="pt-24 sm:pt-28 pb-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-3 shadow-sm">
+            <ForumBreadcrumbs items={breadcrumbItems} onNavigate={navigate} />
+            <div className="flex items-center gap-2 text-sm text-zinc-200">
+              <button
+                onClick={() => navigate(`/forum/kategori/${thread?.category?.slug || 'kategori'}/${thread?.forum?.slug || 'forum'}`)}
+                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-semibold text-white hover:border-emerald-300/60 hover:text-emerald-100"
+              >
+                <ArrowLeft className="w-4 h-4" /> Foruma dön
+              </button>
+              <ForumThemeToggle />
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[2fr,1fr] items-start">
+          {error && (
+            <div className="rounded-xl border border-amber-200/60 bg-amber-500/10 p-4 text-amber-100 text-sm">{error}</div>
+          )}
+
+          <div className="grid gap-6 lg:grid-cols-[1.7fr,1fr] items-start">
             <div className="space-y-4">
-              <section id="thread" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+              <section id="thread" className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl space-y-4">
                 {loadingThread ? (
                   <div className="space-y-3">
-                    <div className="h-7 bg-slate-200 rounded-lg animate-pulse" />
-                    <div className="h-20 bg-slate-200 rounded-lg animate-pulse" />
+                    <div className="h-6 bg-white/10 rounded-lg animate-pulse" />
+                    <div className="h-24 bg-white/10 rounded-lg animate-pulse" />
                   </div>
                 ) : thread ? (
                   <div className="space-y-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                        <Timer className="w-4 h-4" /> {thread.status === 'resolved' ? 'Çözüldü' : thread.status === 'in_progress' ? 'Takipte' : 'Açık'}
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 ${statusStyles[thread.status || 'unknown']}`}>
+                        <Timer className="w-4 h-4" />
+                        {thread.status === 'resolved'
+                          ? 'Çözüldü'
+                          : thread.status === 'in_progress'
+                          ? 'Takipte'
+                          : thread.status === 'open'
+                          ? 'Açık'
+                          : 'Durum Bilinmiyor'}
                       </span>
                       {thread.is_locked && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-slate-600">
+                        <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 bg-white/10 border border-white/20 text-zinc-200">
                           <Lock className="w-4 h-4" /> Kilitli
                         </span>
                       )}
                       {thread.google_connected && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
+                        <span className="inline-flex items-center gap-1 rounded-full px-3 py-1 bg-emerald-500/20 border border-emerald-400/40 text-emerald-100">
                           <BadgeCheck className="w-4 h-4" /> Google bağlı
                         </span>
                       )}
                     </div>
-                    <h1 className="text-3xl font-extrabold text-slate-900">{thread.title}</h1>
-                    <p className="text-slate-800 whitespace-pre-line leading-relaxed">{thread.body}</p>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 border border-slate-200">
-                        <Heart className="w-4 h-4" /> {likes[thread.id] || 12} beğeni
+
+                    <div className="space-y-1">
+                      <h1 className="text-3xl font-black text-white leading-tight">{thread.title}</h1>
+                      <p className="text-sm text-zinc-300">
+                        {thread.category?.name && <span>{thread.category.name}</span>}
+                        {thread.forum?.name && <span className="text-zinc-500"> • {thread.forum.name}</span>}
+                        <span className="text-zinc-500"> • {formatDate(thread.created_at)}</span>
+                      </p>
+                    </div>
+
+                    <p className="text-zinc-100 whitespace-pre-line leading-relaxed">{thread.body}</p>
+
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-200">
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                        <MessageCircle className="w-4 h-4" /> {replies.length} yanıt
+                      </span>
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                        <Eye className="w-4 h-4" /> {thread.view_count ?? 0} görüntülenme
+                      </span>
+                      <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                        <Heart className="w-4 h-4" /> {likes[thread.id] || 0} beğeni
                       </span>
                       <button
                         onClick={() => handleLike(thread.id)}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-slate-200 text-blue-700 hover:bg-blue-50"
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1 font-semibold text-white hover:border-emerald-300/60 hover:text-emerald-100"
                       >
                         <Heart className="w-4 h-4" /> Beğen
                       </button>
                       <button
                         onClick={() => setQuote(thread.body)}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-slate-200 text-blue-700 hover:bg-blue-50"
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1 font-semibold text-white hover:border-emerald-300/60 hover:text-emerald-100"
                       >
                         <Quote className="w-4 h-4" /> Alıntıla
                       </button>
                       <button
                         onClick={() => notification.info('Raporun alındı, moderasyon ekibine iletildi.')}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50"
+                        className="inline-flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-500/20 px-3 py-1 font-semibold text-amber-50 hover:border-amber-300/60"
                       >
                         <Flag className="w-4 h-4" /> Şikayet et
                       </button>
                     </div>
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      {thread.tags.map((tag) => (
-                        <span key={tag} className="px-2 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="text-sm text-slate-600">Görüntülenme: {thread.view_count}</div>
                   </div>
                 ) : (
-                  <div className="text-slate-600">Konu bulunamadı.</div>
+                  <div className="text-zinc-300">Konu bulunamadı.</div>
                 )}
               </section>
 
-              <section className="rounded-2xl border border-blue-100 bg-blue-50 p-5 space-y-3 shadow-sm">
-                <div className="flex items-center gap-2 text-blue-800">
+              <section className="rounded-2xl border border-emerald-400/40 bg-emerald-500/15 p-5 space-y-3 text-emerald-50 shadow-sm">
+                <div className="flex items-center gap-2 text-emerald-100">
                   <ShieldCheck className="w-5 h-5" />
                   <p className="font-semibold">Admin çözüm alanı</p>
                 </div>
-                <p className="text-sm text-blue-900/80 leading-relaxed">
+                <p className="text-sm text-emerald-100/90 leading-relaxed">
                   Çözüm işaretleme işlemi Supabase RPC ile sadece admin rolüne açık olacak şekilde tasarlandı. Rol bilgisini user_profiles tablosundan çekiyoruz.
                 </p>
               </section>
@@ -287,11 +306,11 @@ export function ForumThreadPage({ slugAndId }: Props) {
                 {loadingReplies ? (
                   <div className="space-y-2">
                     {[...Array(3)].map((_, idx) => (
-                      <div key={idx} className="h-16 bg-slate-200 rounded-xl animate-pulse" />
+                      <div key={idx} className="h-16 rounded-2xl border border-white/10 bg-white/5 animate-pulse" />
                     ))}
                   </div>
                 ) : replies.length === 0 ? (
-                  <div className="text-center text-slate-500 py-6 bg-white border border-slate-200 rounded-2xl">Henüz yanıt yok.</div>
+                  <div className="text-center text-zinc-300 py-6 rounded-2xl border border-white/10 bg-white/5">Henüz yanıt yok.</div>
                 ) : (
                   replies.map((reply) => (
                     <div key={reply.id} className="space-y-2">
@@ -314,44 +333,42 @@ export function ForumThreadPage({ slugAndId }: Props) {
                 )}
               </section>
 
+              {quote && (
+                <div className="text-xs text-emerald-50 bg-emerald-500/15 border border-emerald-400/40 rounded-lg px-3 py-2 flex items-start justify-between gap-3">
+                  <span className="flex-1">Alıntı: {quote.slice(0, 200)}...</span>
+                  <button onClick={() => setQuote('')} className="text-emerald-200 underline">kaldır</button>
+                </div>
+              )}
+
               {!thread?.is_locked && (
-                <form
-                  id="reply-form"
-                  onSubmit={handleReplySubmit}
-                  className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-                >
+                <form id="reply-form" onSubmit={handleReplySubmit} className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs text-slate-600">
-                      {isGoogleLinked ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          <BadgeCheck className="w-4 h-4" /> Google bağlı
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                          <Lock className="w-4 h-4" /> Bağlantı gerekiyor
-                        </span>
-                      )}
-                      <span>Admin yanıtları otomatik vurgulanır.</span>
+                    <div className="space-y-1">
+                      <p className="text-lg font-semibold text-white">Yanıt yaz</p>
+                      <p className="text-sm text-zinc-300">Kendi deneyimini ve çözüm adımlarını paylaş.</p>
                     </div>
-                    <div className="text-xs text-slate-500">{replies.length} yanıt</div>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
+                      <MessageCircle className="w-4 h-4" /> {replies.length} yanıt
+                    </span>
                   </div>
-                  {quote && (
-                    <div className="text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-                      Alıntı: {quote.slice(0, 140)}...
-                      <button onClick={() => setQuote('')} className="ml-2 underline text-blue-700">kaldır</button>
-                    </div>
-                  )}
+
                   <textarea
                     placeholder="Kendi deneyimini ve çözüm adımlarını paylaş..."
                     value={replyBody}
                     onChange={(e) => setReplyBody(e.target.value)}
                     required
-                    rows={4}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-blue-400 resize-none"
+                    rows={5}
+                    className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/10 text-white placeholder:text-zinc-500 focus:outline-none focus:border-emerald-400 resize-none"
                   />
+
+                  <div className="flex flex-wrap gap-2 text-xs text-zinc-300">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">Görsel ekle</span>
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">Kod bloğu</span>
+                  </div>
+
                   <button
                     type="submit"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-500 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
                     disabled={!replyBody}
                   >
                     <Send className="w-4 h-4" /> Yanıt Gönder
@@ -360,7 +377,7 @@ export function ForumThreadPage({ slugAndId }: Props) {
               )}
 
               {thread?.is_locked && (
-                <div className="flex items-center gap-2 text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm">
+                <div className="flex items-center gap-2 text-amber-100 bg-amber-500/20 border border-amber-400/40 rounded-xl px-4 py-3 text-sm">
                   <Lock className="w-4 h-4" />
                   Konu çözüm işaretlendiği için kilitlendi. Yeni yanıt eklemek için adminlerle iletişime geç.
                 </div>
@@ -368,31 +385,31 @@ export function ForumThreadPage({ slugAndId }: Props) {
             </div>
 
             <div className="space-y-4" id="similar-topics">
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-                <h3 className="text-sm font-semibold text-slate-800">Konu bilgileri</h3>
-                <div className="grid grid-cols-2 gap-3 text-sm text-slate-700">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm space-y-3">
+                <h3 className="text-sm font-semibold text-white">Konu bilgileri</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm text-zinc-200">
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-500">Görüntülenme</span>
-                    <span className="font-semibold text-slate-900">{thread?.view_count ?? '-'} </span>
+                    <span className="text-xs text-zinc-400">Görüntülenme</span>
+                    <span className="font-semibold text-white">{thread?.view_count ?? '-'}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-500">Beğeniler</span>
-                    <span className="font-semibold text-slate-900">{thread ? likes[thread.id] || 12 : '-'}</span>
+                    <span className="text-xs text-zinc-400">Beğeniler</span>
+                    <span className="font-semibold text-white">{thread ? likes[thread.id] || 0 : '-'}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-500">Durum</span>
-                    <span className="font-semibold text-slate-900 capitalize">{thread?.status || '—'}</span>
+                    <span className="text-xs text-zinc-400">Durum</span>
+                    <span className="font-semibold text-white capitalize">{thread?.status || '—'}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-500">Yanıt sayısı</span>
-                    <span className="font-semibold text-slate-900">{replies.length}</span>
+                    <span className="text-xs text-zinc-400">Yanıt sayısı</span>
+                    <span className="font-semibold text-white">{replies.length}</span>
                   </div>
                 </div>
               </div>
 
               <SimilarTopicsList threads={similarThreads} />
 
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 shadow-sm text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-white/20 bg-white/5 p-5 shadow-sm text-sm text-zinc-300">
                 Sağ sütun için reklam veya widget alanı. Duyuru, kampanya veya topluluk kuralları için kullanılabilir.
               </div>
             </div>
@@ -407,32 +424,32 @@ function SimilarTopicsList({ threads }: { threads: ForumThread[] }) {
   if (!threads.length) return null;
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-800">Benzer konular</h3>
-        <span className="text-xs text-slate-500">{threads.length} başlık</span>
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm space-y-3">
+      <div className="flex items-center justify-between text-white">
+        <h3 className="text-sm font-semibold">Benzer konular</h3>
+        <span className="text-xs text-zinc-300">{threads.length} başlık</span>
       </div>
-      <ul className="divide-y divide-slate-200">
+      <ul className="divide-y divide-white/10">
         {threads.map((item) => (
           <li key={item.id} className="py-3 first:pt-0 last:pb-0">
             <button
               onClick={() => navigate(buildThreadPath(item))}
               className="text-left w-full space-y-1"
             >
-              <p className="font-semibold text-slate-900 hover:text-blue-700 leading-snug">{item.title}</p>
-              <div className="flex items-center gap-2 text-xs text-slate-600">
-                {item.category?.name && <span className="text-slate-500">{item.category.name}</span>}
-                {item.forum?.name && <span className="text-slate-400">• {item.forum.name}</span>}
+              <p className="font-semibold text-white hover:text-emerald-200 leading-snug">{item.title}</p>
+              <div className="flex items-center gap-2 text-xs text-zinc-300">
+                {item.category?.name && <span className="text-zinc-400">{item.category.name}</span>}
+                {item.forum?.name && <span className="text-zinc-500">• {item.forum.name}</span>}
               </div>
-              <div className="flex items-center gap-3 text-xs text-slate-500">
+              <div className="flex items-center gap-3 text-xs text-zinc-400">
                 <span className="inline-flex items-center gap-1">
                   <MessageCircle className="w-3 h-3" /> {item.reply_count ?? 0}
                 </span>
                 <span className="inline-flex items-center gap-1">
-                  <Eye className="w-3 h-3" /> {item.view_count}
+                  <Eye className="w-3 h-3" /> {item.view_count ?? 0}
                 </span>
                 <span className="inline-flex items-center gap-1 capitalize">
-                  <Timer className="w-3 h-3" /> {item.status}
+                  <Timer className="w-3 h-3" /> {item.status || 'durum yok'}
                 </span>
               </div>
             </button>
