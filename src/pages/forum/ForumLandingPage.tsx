@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, PlusCircle, Sparkles } from 'lucide-react';
 import { ForumThemeToggle } from '../../components/forum/ForumThemeToggle';
-import { getForumCategoriesWithForums, getLatestThreads, type ForumCategory, type ForumForum } from '../../lib/forum';
+import {
+  getForumCategoriesWithForums,
+  getLatestThreads,
+  type ForumCategory,
+  type ForumForum,
+  type ForumThread,
+} from '../../lib/forum';
 import { navigate } from '../../lib/navigation';
 import { ForumCategoryList } from '../../components/forum/ForumCategoryList';
 import { ForumThreadList } from '../../components/forum/ForumThreadList';
@@ -10,13 +16,16 @@ import { ForumNotificationBell } from '../../components/forum/ForumNotificationB
 
 export function ForumLandingPage() {
   const [categories, setCategories] = useState<(ForumCategory & { forums: ForumForum[] })[]>([]);
+  const [latestThreads, setLatestThreads] = useState<ForumThread[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingThreads, setLoadingThreads] = useState(true);
 
   useEffect(() => {
     document.title = 'Forum | Bobin Kardeşler';
     document.body.dataset.forumTheme = (localStorage.getItem('bk-forum-theme') as 'dark' | 'light' | null) ?? 'dark';
     loadCategories();
+    loadThreads();
   }, []);
 
   async function loadCategories() {
@@ -29,6 +38,13 @@ export function ForumLandingPage() {
       setError(null);
     }
     setLoading(false);
+  }
+
+  async function loadThreads() {
+    setLoadingThreads(true);
+    const threads = await getLatestThreads(12);
+    setLatestThreads(threads);
+    setLoadingThreads(false);
   }
 
   function handleCreateForum() {
@@ -121,10 +137,10 @@ export function ForumLandingPage() {
           <div className="space-y-6">
             <div className="forum-card rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-                <div>
-                  <h2 className="text-xl font-bold text-white">Yeni konular</h2>
-                  <p className="forum-muted text-sm">Tüm alt forumlardan güncel başlıklar</p>
-                </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Yeni konular</h2>
+                <p className="forum-muted text-sm">Tüm alt forumlardan güncel başlıklar</p>
+              </div>
                 <button
                   onClick={() => navigate('/forum/son-konular')}
                   className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:border-emerald-300/60 hover:text-emerald-100"
@@ -132,10 +148,18 @@ export function ForumLandingPage() {
                   Tümünü Gör <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
-              <ForumThreadList
-                threads={getLatestThreads(8)}
-                onSelect={(thread) => navigate(`/forum/konu/${thread.slug || thread.id}-${thread.id}`)}
-              />
+              {loadingThreads ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, idx) => (
+                    <div key={idx} className="h-24 rounded-xl border border-white/10 bg-white/5 animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <ForumThreadList
+                  threads={latestThreads.slice(0, 8)}
+                  onSelect={(thread) => navigate(`/forum/konu/${thread.slug || thread.id}-${thread.id}`)}
+                />
+              )}
             </div>
 
             {loading ? (
@@ -160,16 +184,20 @@ export function ForumLandingPage() {
                 <span className="text-xs font-medium text-zinc-300">Öne çıkanlar</span>
               </div>
               <div className="space-y-3">
-                {getLatestThreads(4).map((thread) => (
-                  <button
-                    key={thread.id}
-                    onClick={() => navigate(`/forum/konu/${thread.slug || thread.id}-${thread.id}`)}
-                    className="w-full rounded-lg border border-white/10 px-4 py-3 text-left transition hover:border-emerald-300/60 hover:bg-white/10"
-                  >
-                    <p className="text-xs font-medium text-emerald-200">{thread.category?.name}</p>
-                    <p className="text-sm font-semibold text-white line-clamp-2">{thread.title}</p>
-                  </button>
-                ))}
+                {loadingThreads
+                  ? [...Array(4)].map((_, idx) => (
+                      <div key={idx} className="h-16 rounded-lg border border-white/10 bg-white/5 animate-pulse" />
+                    ))
+                  : latestThreads.slice(0, 4).map((thread) => (
+                      <button
+                        key={thread.id}
+                        onClick={() => navigate(`/forum/konu/${thread.slug || thread.id}-${thread.id}`)}
+                        className="w-full rounded-lg border border-white/10 px-4 py-3 text-left transition hover:border-emerald-300/60 hover:bg-white/10"
+                      >
+                        <p className="text-xs font-medium text-emerald-200">{thread.category?.name}</p>
+                        <p className="text-sm font-semibold text-white line-clamp-2">{thread.title}</p>
+                      </button>
+                    ))}
               </div>
             </div>
 

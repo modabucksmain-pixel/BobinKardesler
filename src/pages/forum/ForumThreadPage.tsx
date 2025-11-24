@@ -72,16 +72,15 @@ export function ForumThreadPage({ slugAndId }: Props) {
     }
 
     setThread(data);
-    setSimilarThreads(
-      getSimilarThreads({
-        forumId: data.forum?.id,
-        categoryId: data.category?.id,
-        excludeId: data.id,
-      })
-    );
+    const similar = await getSimilarThreads({
+      forumId: data.forum?.id,
+      categoryId: data.category?.id,
+      excludeId: data.id,
+    });
+    setSimilarThreads(similar);
     setError(null);
     document.title = `${data.title} | Forum`;
-    incrementThreadViewCount(threadId);
+    incrementThreadViewCount(threadId, data.view_count ?? 0);
     setLoadingThread(false);
     await loadReplies();
   }, [loadReplies, threadId]);

@@ -427,6 +427,232 @@ export interface Database {
           unsubscribe_token?: string
         }
       }
+      forum_categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          description?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          created_at?: string
+        }
+      }
+      forum_forums: {
+        Row: {
+          id: string
+          category_id: string
+          name: string
+          slug: string
+          description: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          category_id: string
+          name: string
+          slug: string
+          description?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          category_id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          created_at?: string
+        }
+      }
+      forum_threads: {
+        Row: {
+          id: string
+          forum_id: string
+          title: string
+          slug: string | null
+          body: string
+          tags: string[] | null
+          status: 'open' | 'in_progress' | 'resolved'
+          created_by: string | null
+          created_by_email: string | null
+          google_connected: boolean | null
+          solution_reply_id: string | null
+          last_activity_at: string
+          created_at: string
+          updated_at: string
+          view_count: number
+          is_locked: boolean | null
+        }
+        Insert: {
+          id?: string
+          forum_id: string
+          title: string
+          slug?: string | null
+          body: string
+          tags?: string[] | null
+          status?: 'open' | 'in_progress' | 'resolved'
+          created_by?: string | null
+          created_by_email?: string | null
+          google_connected?: boolean | null
+          solution_reply_id?: string | null
+          last_activity_at?: string
+          created_at?: string
+          updated_at?: string
+          view_count?: number
+          is_locked?: boolean | null
+        }
+        Update: {
+          id?: string
+          forum_id?: string
+          title?: string
+          slug?: string | null
+          body?: string
+          tags?: string[] | null
+          status?: 'open' | 'in_progress' | 'resolved'
+          created_by?: string | null
+          created_by_email?: string | null
+          google_connected?: boolean | null
+          solution_reply_id?: string | null
+          last_activity_at?: string
+          created_at?: string
+          updated_at?: string
+          view_count?: number
+          is_locked?: boolean | null
+        }
+      }
+      forum_posts: {
+        Row: {
+          id: string
+          thread_id: string
+          author_id: string | null
+          author_email: string | null
+          body: string
+          is_solution: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          thread_id: string
+          author_id?: string | null
+          author_email?: string | null
+          body: string
+          is_solution?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          thread_id?: string
+          author_id?: string | null
+          author_email?: string | null
+          body?: string
+          is_solution?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      forum_post_likes: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          created_at?: string
+        }
+      }
+      forum_notifications: {
+        Row: {
+          id: string
+          user_id: string
+          payload: Json
+          is_read: boolean | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          payload?: Json
+          is_read?: boolean | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          payload?: Json
+          is_read?: boolean | null
+          created_at?: string
+        }
+      }
+      forum_reports: {
+        Row: {
+          id: string
+          post_id: string | null
+          thread_id: string | null
+          reporter_id: string | null
+          reason: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id?: string | null
+          thread_id?: string | null
+          reporter_id?: string | null
+          reason: string
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string | null
+          thread_id?: string | null
+          reporter_id?: string | null
+          reason?: string
+          status?: string
+          created_at?: string
+        }
+      }
+      profiles: {
+        Row: {
+          id: string
+          role: 'admin' | 'moderator' | 'user'
+          created_at: string
+        }
+        Insert: {
+          id: string
+          role?: 'admin' | 'moderator' | 'user'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          role?: 'admin' | 'moderator' | 'user'
+          created_at?: string
+        }
+      }
       giveaways: {
         Row: {
           id: string
