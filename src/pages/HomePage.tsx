@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Eye,
   ThumbsUp,
@@ -16,14 +16,11 @@ import {
   BookOpen,
   Trophy,
   Megaphone,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import { getChannelStats, getLatestVideos, formatNumber, formatDate, type YouTubeVideo, type ChannelStats } from '../lib/youtube';
 import { supabase } from '../lib/supabase';
 import { getPublishedAnnouncements, type Announcement } from '../lib/announcements';
 import { getCommunityPosts, type CommunityPost } from '../lib/community';
-import { useNotification } from '../contexts/NotificationContext';
 
 interface BlogPost {
   id: string;
@@ -41,38 +38,6 @@ export function HomePage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { error: showError } = useNotification();
-
-  const quickMenuItems = useMemo(
-    () => [
-      {
-        href: '/topluluk',
-        title: 'Topluluk meydanı',
-        description: 'Duyurular, buluşmalar ve ekip içi güncellemeler',
-        icon: <Megaphone className="w-5 h-5" />,
-      },
-      {
-        href: '/video-fikirleri',
-        title: 'Fikir gönder',
-        description: 'Atölye gündemine öneri veya problem ekle',
-        icon: <Sparkles className="w-5 h-5" />,
-      },
-      {
-        href: '/cekilisler',
-        title: 'Çekilişlere katıl',
-        description: 'Devam eden ödül havuzlarını ve katılım şartlarını gör',
-        icon: <Trophy className="w-5 h-5" />,
-      },
-      {
-        href: '/duyurular',
-        title: 'Duyurular',
-        description: 'Yeni yayınlar, canlı yayın takvimi ve stüdyo günlüğü',
-        icon: <Bell className="w-5 h-5" />,
-      },
-    ],
-    [],
-  );
 
   const learningTracks = useMemo(
     () => [
@@ -98,72 +63,35 @@ export function HomePage() {
     [],
   );
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const [channelStats, latestVideos, blogResult, announcementResult, communityData] = await Promise.all([
-        getChannelStats(),
-        getLatestVideos(8),
-        supabase
-          .from('blog_posts')
-          .select('id, title, excerpt, featured_image, slug, published_at')
-          .eq('status', 'published')
-          .order('published_at', { ascending: false })
-          .limit(3),
-        getPublishedAnnouncements(3),
-        getCommunityPosts(3),
-      ]);
-
-      let hasError = false;
-
-      setStats(channelStats);
-      setVideos(latestVideos);
-
-      if (blogResult.error) {
-        hasError = true;
-      } else if (blogResult.data) {
-        setBlogPosts(blogResult.data);
-      }
-
-      if (announcementResult.error) {
-        hasError = true;
-      } else {
-        setAnnouncements(announcementResult.data);
-      }
-
-      setCommunityPosts(communityData);
-
-      if (hasError) {
-        const message = 'Beklenmeyen bir hata oluştu, lütfen daha sonra tekrar dene.';
-        setErrorMessage(message);
-        showError(message);
-      }
-    } catch (error) {
-      console.error('Home page data load error', error);
-      const message = 'Beklenmeyen bir hata oluştu, lütfen daha sonra tekrar dene.';
-      setErrorMessage(message);
-      showError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, [showError]);
-
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, []);
+
+  async function loadData() {
+    setLoading(true);
+    const [channelStats, latestVideos, blogData, announcementData, communityData] = await Promise.all([
+      getChannelStats(),
+      getLatestVideos(8),
+      supabase
+        .from('blog_posts')
+        .select('id, title, excerpt, featured_image, slug, published_at')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(3),
+      getPublishedAnnouncements(3),
+      getCommunityPosts(3),
+    ]);
+
+    setStats(channelStats);
+    setVideos(latestVideos);
+    if (blogData.data) setBlogPosts(blogData.data);
+    setAnnouncements(announcementData);
+    setCommunityPosts(communityData);
+    setLoading(false);
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950">
-
-      {errorMessage && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24">
-          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-100 p-4 text-sm">
-            {errorMessage}
-          </div>
-        </div>
-      )}
 
       <section className="relative py-16 lg:py-24">
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black" />
@@ -267,7 +195,12 @@ export function HomePage() {
                 )}
               </div>
 
-              <ScrollableMenu items={quickMenuItems} />
+              <div className="grid grid-cols-2 gap-3">
+                <QuickLink href="/topluluk" icon={<Megaphone className="w-4 h-4" />} title="Topluluk meydanı" />
+                <QuickLink href="/video-fikirleri" icon={<Sparkles className="w-4 h-4" />} title="Fikir gönder" />
+                <QuickLink href="/cekilisler" icon={<Trophy className="w-4 h-4" />} title="Çekilişlere katıl" />
+                <QuickLink href="/duyurular" icon={<Bell className="w-4 h-4" />} title="Duyurular" />
+              </div>
             </div>
           </div>
       </section>
@@ -626,180 +559,17 @@ function BlogCard({ post, index }: { post: BlogPost; index: number }) {
   );
 }
 
-interface MenuItem {
-  href: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}
-
-function ScrollableMenu({ items }: { items: MenuItem[] }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
-
-  const scrollToIndex = useCallback(
-    (index: number) => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const target = container.children[index] as HTMLElement | undefined;
-      if (!target) return;
-
-      const offset = target.offsetLeft - container.offsetLeft;
-      container.scrollTo({ left: offset, behavior: 'smooth' });
-    },
-    [containerRef],
-  );
-
-  const handlePrevious = useCallback(
-    () => scrollToIndex(Math.max(0, activeIndex - 1)),
-    [activeIndex, scrollToIndex],
-  );
-
-  const handleNext = useCallback(
-    () => scrollToIndex(Math.min(items.length - 1, activeIndex + 1)),
-    [activeIndex, items.length, scrollToIndex],
-  );
-
-  useEffect(() => {
-    if (!isOpen) return undefined;
-
-    const container = containerRef.current;
-    if (!container) return undefined;
-
-    const updateActiveIndex = () => {
-      const children = Array.from(container.children) as HTMLElement[];
-      if (children.length === 0) return;
-
-      const containerCenter = container.scrollLeft + container.clientWidth / 2;
-      const nearestIndex = children.reduce(
-        (closest, child, index) => {
-          const childCenter = child.offsetLeft + child.offsetWidth / 2;
-          const distance = Math.abs(containerCenter - childCenter);
-          return distance < closest.distance ? { index, distance } : closest;
-        },
-        { index: 0, distance: Infinity },
-      ).index;
-
-      setActiveIndex(nearestIndex);
-    };
-
-    updateActiveIndex();
-    container.addEventListener('scroll', updateActiveIndex, { passive: true });
-    return () => container.removeEventListener('scroll', updateActiveIndex);
-  }, [items.length, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return undefined;
-
-    const raf = requestAnimationFrame(() => scrollToIndex(activeIndex));
-    return () => cancelAnimationFrame(raf);
-  }, [activeIndex, isOpen, scrollToIndex]);
-
+function QuickLink({ href, icon, title }: { href: string; icon: React.ReactNode; title: string }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 shadow-inner">
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
-        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.25em] text-zinc-400">
-          <Sparkles className="h-4 w-4 text-green-400" />
-          <span>Hızlı geçiş</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsOpen((prev) => !prev)}
-            className="rounded-lg border border-green-500/50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-green-200 transition hover:bg-green-500/10"
-            aria-expanded={isOpen}
-            aria-controls="quick-menu-slider"
-          >
-            {isOpen ? 'Paneli Kapat' : 'Paneli Aç'}
-          </button>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePrevious}
-              disabled={!isOpen || activeIndex === 0}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition hover:border-green-400/50 hover:text-green-200 disabled:opacity-40"
-              aria-label="Önceki kısayol"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={!isOpen || activeIndex === items.length - 1}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition hover:border-green-400/50 hover:text-green-200 disabled:opacity-40"
-              aria-label="Sonraki kısayol"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+    <a
+      href={href}
+      className="flex items-center justify-between px-4 py-3 rounded-xl border border-zinc-800 bg-zinc-900/70 text-zinc-200 hover:border-green-500/40 hover:text-green-300 transition-all duration-300"
+    >
+      <div className="flex items-center space-x-3">
+        <div className="w-9 h-9 rounded-lg bg-green-500/10 text-green-400 flex items-center justify-center">{icon}</div>
+        <span className="font-semibold">{title}</span>
       </div>
-
-      {isOpen ? (
-        <div className="relative" id="quick-menu-slider">
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-zinc-950 via-zinc-950/70 to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-zinc-950 via-zinc-950/70 to-transparent" />
-
-          <div
-            ref={containerRef}
-            className="scrollbar-hidden flex gap-3 overflow-x-auto pb-2 pr-2 snap-x snap-mandatory"
-            aria-label="Kısayol menüsü"
-          >
-            {items.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="group relative min-w-[230px] snap-center rounded-xl border border-white/10 bg-white/5 p-4 text-left transition hover:-translate-y-0.5 hover:border-green-400/40"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-500/10 text-green-400 shadow-inner">
-                    {item.icon}
-                  </div>
-                  <ArrowUpRight className="h-4 w-4 text-zinc-400 transition group-hover:text-green-300" />
-                </div>
-                <div className="mt-3 space-y-1">
-                  <p className="text-sm font-semibold text-white">{item.title}</p>
-                  <p className="text-xs text-zinc-400 leading-relaxed">{item.description}</p>
-                </div>
-                <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition group-hover:opacity-100">
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/10" />
-                  <div className="absolute inset-0 rounded-xl border border-green-500/20" />
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-200">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-green-400" />
-            <div className="space-y-0.5">
-              <p className="font-semibold text-white">Kısayol paneli kapalı</p>
-              <p className="text-xs text-zinc-300">Paneli açarak kaydırılabilir menüdeki tüm bağlantıları kullanabilirsin.</p>
-            </div>
-          </div>
-          <ArrowUpRight className="h-4 w-4 text-green-300" />
-        </div>
-      )}
-
-      <div className="mt-3 flex items-center justify-center gap-2">
-        {items.map((item, index) => (
-          <button
-            key={item.href}
-            type="button"
-            onClick={() => scrollToIndex(index)}
-            disabled={!isOpen}
-            className={`h-2.5 rounded-full transition ${
-              activeIndex === index && isOpen
-                ? 'w-6 bg-green-400 shadow shadow-green-500/30'
-                : 'w-2 bg-zinc-700 hover:bg-zinc-500'
-            } ${!isOpen ? 'opacity-50' : ''}`}
-            aria-label={`${item.title} bağlantısına git`}
-          />
-        ))}
-      </div>
-    </div>
+      <ArrowUpRight className="w-4 h-4" />
+    </a>
   );
 }

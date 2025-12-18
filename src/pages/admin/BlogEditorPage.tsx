@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Save, ArrowLeft, FileText } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
-import { useAdminGuard } from '../../lib/admin';
 
 interface BlogPost {
   id?: string;
@@ -15,7 +15,7 @@ interface BlogPost {
 }
 
 export function BlogEditorPage({ postId }: { postId?: string }) {
-  const { user, isAdmin, checking } = useAdminGuard();
+  const { user, loading: authLoading } = useAuth();
   const { success, error: showError, info } = useNotification();
   const [post, setPost] = useState<BlogPost>({
     title: '',
@@ -37,7 +37,34 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
 
   const readingTime = useMemo(() => calculateReadingTime(post.content), [post.content]);
 
-  const loadPost = useCallback(async () => {
+  useEffect(() => {
+    if (!authLoading && !user) {
+      window.location.href = '/admin/login';
+      return;
+    }
+    if (!authLoading && user && postId) {
+      loadPost();
+    } else if (!authLoading && user) {
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft) as BlogPost;
+          setPost(parsed);
+          info('Kaydedilmemiş taslak geri yüklendi');
+        } catch (e) {
+          console.error('Taslak yüklenemedi', e);
+        }
+      }
+    }
+  }, [user, authLoading, postId, draftKey, info]);
+
+  useEffect(() => {
+    if (!authLoading && user && !postId) {
+      localStorage.setItem(draftKey, JSON.stringify(post));
+    }
+  }, [post, draftKey, authLoading, user, postId]);
+
+  async function loadPost() {
     setLoading(true);
     const { data } = await supabase
       .from('blog_posts')
@@ -57,34 +84,7 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
       });
     }
     setLoading(false);
-  }, [postId]);
-
-  useEffect(() => {
-    if (!checking && (!user || !isAdmin)) {
-      window.location.href = '/admin/login';
-      return;
-    }
-    if (!checking && user && isAdmin && postId) {
-      loadPost();
-    } else if (!checking && user && isAdmin) {
-      const savedDraft = localStorage.getItem(draftKey);
-      if (savedDraft) {
-        try {
-          const parsed = JSON.parse(savedDraft) as BlogPost;
-          setPost(parsed);
-          info('Kaydedilmemiş taslak geri yüklendi');
-        } catch (e) {
-          console.error('Taslak yüklenemedi', e);
-        }
-      }
-    }
-  }, [user, checking, isAdmin, postId, draftKey, info, loadPost]);
-
-  useEffect(() => {
-    if (!checking && user && isAdmin && !postId) {
-      localStorage.setItem(draftKey, JSON.stringify(post));
-    }
-  }, [post, draftKey, checking, user, isAdmin, postId]);
+  }
 
   function generateSlug(title: string): string {
     return title
@@ -180,7 +180,7 @@ export function BlogEditorPage({ postId }: { postId?: string }) {
     }
   }
 
-  if (checking || !user || !isAdmin) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

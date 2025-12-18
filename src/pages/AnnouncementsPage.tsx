@@ -1,37 +1,23 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bell, Calendar, ArrowUpRight } from 'lucide-react';
 import { getPublishedAnnouncements, type Announcement } from '../lib/announcements';
 import { formatDate } from '../lib/youtube';
 import { PageLayout } from '../components/PageLayout';
-import { useNotification } from '../contexts/NotificationContext';
 
 export function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { error: showError } = useNotification();
-
-  const loadAnnouncements = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(null);
-
-    const { data, error } = await getPublishedAnnouncements();
-
-    if (error) {
-      console.error('Announcements load error', error);
-      const message = 'Beklenmeyen bir hata oluştu, lütfen daha sonra tekrar dene.';
-      setErrorMessage(message);
-      showError(message);
-    } else {
-      setAnnouncements(data);
-    }
-
-    setLoading(false);
-  }, [showError]);
 
   useEffect(() => {
     loadAnnouncements();
-  }, [loadAnnouncements]);
+  }, []);
+
+  async function loadAnnouncements() {
+    setLoading(true);
+    const data = await getPublishedAnnouncements();
+    setAnnouncements(data);
+    setLoading(false);
+  }
 
   return (
     <PageLayout
@@ -40,12 +26,6 @@ export function AnnouncementsPage() {
       eyebrow="Duyuru Panosu"
       actions={[{ label: 'Topluluk sayfasına git', href: '/topluluk' }]}
     >
-      {errorMessage && (
-        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100 text-sm">
-          {errorMessage}
-        </div>
-      )}
-
       {loading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (

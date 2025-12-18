@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Lightbulb, ThumbsUp, Check, X, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAdminGuard } from '../../lib/admin';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface VideoSuggestion {
   id: string;
@@ -17,14 +17,24 @@ interface VideoSuggestion {
 }
 
 export function VideoSuggestionsAdminPage() {
-  const { user, isAdmin, checking } = useAdminGuard();
+  const { user, loading: authLoading } = useAuth();
   const [suggestions, setSuggestions] = useState<VideoSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState('');
 
-  const loadSuggestions = useCallback(async () => {
+  useEffect(() => {
+    if (!authLoading && !user) {
+      window.location.href = '/admin/login';
+      return;
+    }
+    if (!authLoading && user) {
+      loadSuggestions();
+    }
+  }, [user, authLoading]);
+
+  async function loadSuggestions() {
     setLoading(true);
     const query = supabase
       .from('video_suggestions')
@@ -41,23 +51,13 @@ export function VideoSuggestionsAdminPage() {
       setSuggestions(data);
     }
     setLoading(false);
-  }, [filter]);
-
-  useEffect(() => {
-    if (!checking && (!user || !isAdmin)) {
-      window.location.href = '/admin/login';
-      return;
-    }
-    if (!checking && user && isAdmin) {
-      loadSuggestions();
-    }
-  }, [user, checking, isAdmin, loadSuggestions]);
+  }
 
   useEffect(() => {
     if (user) {
       loadSuggestions();
     }
-  }, [filter, user, loadSuggestions]);
+  }, [filter, user]);
 
   async function updateStatus(id: string, status: string) {
     const { error } = await supabase
@@ -127,7 +127,7 @@ export function VideoSuggestionsAdminPage() {
     rejected: suggestions.filter(s => s.status === 'rejected').length,
   };
 
-  if (checking || !user || !isAdmin) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

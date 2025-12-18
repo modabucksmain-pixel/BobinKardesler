@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { MessageSquare, Plus, Edit, Trash2, Eye, Pin, ArrowLeft } from 'lucide-react';
-import { useAdminGuard } from '../../lib/admin';
 
 interface CommunityPost {
   id: string;
@@ -14,21 +14,21 @@ interface CommunityPost {
 }
 
 export function CommunityAdminPage() {
-  const { user, isAdmin, checking } = useAdminGuard();
+  const { user, loading: authLoading } = useAuth();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
 
   useEffect(() => {
-    if (!checking && (!user || !isAdmin)) {
+    if (!authLoading && !user) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!checking && user && isAdmin) {
+    if (!authLoading && user) {
       loadPosts();
     }
-  }, [user, checking, isAdmin]);
+  }, [user, authLoading]);
 
   async function loadPosts() {
     setLoading(true);
@@ -69,7 +69,7 @@ export function CommunityAdminPage() {
     loadPosts();
   }
 
-  if (checking || !user || !isAdmin) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

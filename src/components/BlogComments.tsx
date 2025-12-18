@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MessageCircle, Send, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,7 +28,11 @@ export function BlogComments({ blogPostId }: BlogCommentsProps) {
   const { user } = useAuth();
   const { success, error } = useNotification();
 
-  const loadComments = useCallback(async () => {
+  useEffect(() => {
+    loadComments();
+  }, [blogPostId]);
+
+  async function loadComments() {
     setLoading(true);
     const { data, error: fetchError } = await supabase
       .from('blog_comments')
@@ -42,11 +46,7 @@ export function BlogComments({ blogPostId }: BlogCommentsProps) {
       setComments(data);
     }
     setLoading(false);
-  }, [blogPostId]);
-
-  useEffect(() => {
-    loadComments();
-  }, [loadComments]);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

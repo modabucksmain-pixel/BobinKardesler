@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BarChart3, Check, Clock } from 'lucide-react';
 import { getActivePolls, voteOnPoll, hasUserVoted, type PollWithOptions } from '../lib/polls';
 import { formatDate } from '../lib/youtube';
@@ -8,14 +8,19 @@ export function PollsPage() {
   const [loading, setLoading] = useState(true);
   const [votedPolls, setVotedPolls] = useState<Set<string>>(new Set());
 
-  const loadPolls = useCallback(async () => {
+  useEffect(() => {
+    loadPolls();
+    loadVotedPolls();
+  }, []);
+
+  async function loadPolls() {
     setLoading(true);
     const data = await getActivePolls();
     setPolls(data);
     setLoading(false);
-  }, []);
+  }
 
-  const loadVotedPolls = useCallback(async () => {
+  async function loadVotedPolls() {
     const userIp = await getUserIP();
     const voted = new Set<string>();
 
@@ -27,12 +32,7 @@ export function PollsPage() {
     }
 
     setVotedPolls(voted);
-  }, [polls]);
-
-  useEffect(() => {
-    loadPolls();
-    loadVotedPolls();
-  }, [loadPolls, loadVotedPolls]);
+  }
 
   async function getUserIP(): Promise<string> {
     try {
@@ -57,7 +57,7 @@ export function PollsPage() {
   }
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 pb-12 sm:pb-20">
+    <div className="min-h-screen pt-20 sm:pt-24 pb-12 sm:pb-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 sm:mb-12 text-center">
           <div className="inline-block p-3 sm:p-4 bg-green-500/10 rounded-full mb-4 sm:mb-6">

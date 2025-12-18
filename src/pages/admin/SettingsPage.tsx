@@ -1,24 +1,24 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Save, ArrowLeft, RefreshCw } from 'lucide-react';
-import { useAdminGuard } from '../../lib/admin';
 
 export function SettingsPage() {
-  const { user, isAdmin, checking } = useAdminGuard();
+  const { user, loading: authLoading } = useAuth();
   const [youtubeApiKey, setYoutubeApiKey] = useState('');
   const [youtubeChannelId, setYoutubeChannelId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!checking && (!user || !isAdmin)) {
+    if (!authLoading && !user) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!checking && user && isAdmin) {
+    if (!authLoading && user) {
       loadSettings();
     }
-  }, [user, checking, isAdmin]);
+  }, [user, authLoading]);
 
   async function loadSettings() {
     setLoading(true);
@@ -29,14 +29,12 @@ export function SettingsPage() {
 
     if (data) {
       data.forEach((setting) => {
-        const value = setting.value as { api_key?: string; channel_id?: string } | string | null;
-        if (setting.key === 'youtube_api_key') {
-          const apiKey = typeof value === 'string' ? value : value?.api_key;
-          if (apiKey) setYoutubeApiKey(apiKey);
+        const value = setting.value as any;
+        if (setting.key === 'youtube_api_key' && value?.api_key) {
+          setYoutubeApiKey(value.api_key);
         }
-        if (setting.key === 'youtube_channel_id') {
-          const channelId = typeof value === 'string' ? value : value?.channel_id;
-          if (channelId) setYoutubeChannelId(channelId);
+        if (setting.key === 'youtube_channel_id' && value?.channel_id) {
+          setYoutubeChannelId(value.channel_id);
         }
       });
     }
@@ -81,7 +79,7 @@ export function SettingsPage() {
     alert('Önbellek temizlendi! Veriler yeniden yüklenecek.');
   }
 
-  if (checking || !user || !isAdmin) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

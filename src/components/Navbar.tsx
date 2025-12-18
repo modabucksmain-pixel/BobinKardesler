@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Zap, Search, Sparkles, Menu, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Zap, Menu, X, Search, Sparkles } from 'lucide-react';
 import { Link } from './Link';
-import { useAuth } from '../contexts/AuthContext';
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isExploreOpen, setIsExploreOpen] = useState(false);
-  const { user, loading, signOut } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 12);
@@ -14,19 +12,16 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const contentLinks = [
-    { href: '/forum', label: 'Forum' },
+  const navLinks = [
+    { href: '/', label: 'Ana Sayfa' },
     { href: '/videos', label: 'Videolar' },
-    { href: '/blog', label: 'Blog' },
     { href: '/projeler', label: 'Projeler' },
+    { href: '/blog', label: 'Blog' },
     { href: '/duyurular', label: 'Duyurular' },
-  ];
-
-  const communityLinks = [
+    { href: '/forum', label: 'Forum' },
     { href: '/topluluk', label: 'Topluluk' },
     { href: '/anketler', label: 'Anketler' },
     { href: '/cekilisler', label: 'Çekilişler' },
-    { href: '/account', label: 'Profilim' },
   ];
 
   return (
@@ -36,235 +31,98 @@ export function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between h-24">
-            <Link href="/" className="flex items-center space-x-4 group">
-              <div className="relative">
-                <div className="absolute inset-0 rounded-xl bg-green-500/20 blur-md transition group-hover:scale-110" />
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 border border-white/10 text-green-400 shadow-inner">
-                  <Zap className="w-8 h-8" />
-                </div>
+        <div className="flex items-center justify-between h-16 sm:h-20">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-xl bg-green-500/20 blur-md transition group-hover:scale-110" />
+              <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-900 border border-white/10 text-green-400 shadow-inner">
+                <Zap className="w-6 h-6" />
               </div>
-              <div className="leading-tight">
-                <p className="text-base text-zinc-400 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-green-400" />
-                  Elektrik & Maker Üssü
-                </p>
-                <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">Bobin Kardeşler</span>
-              </div>
-            </Link>
+            </div>
+            <div className="leading-tight">
+              <p className="text-xs text-zinc-400 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-green-400" />
+                Elektrik & Maker Üssü
+              </p>
+              <span className="text-lg sm:text-xl font-black text-white tracking-tight">Bobin Kardeşler</span>
+            </div>
+          </Link>
 
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsExploreOpen((open) => !open)}
-                className="hidden md:inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition hover:border-green-400/40 hover:bg-white/10"
-              >
-                {isExploreOpen ? (
-                  <>
-                    <X className="h-5 w-5" />
-                    Keşfet Panelini Kapat
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-5 w-5" />
-                    Keşfet Paneli
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsExploreOpen((open) => !open)}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white transition hover:border-green-400/40 hover:bg-white/10 md:hidden"
-                aria-expanded={isExploreOpen}
-                aria-controls="navbar-menu"
-              >
-                {isExploreOpen ? (
-                  <>
-                    <X className="h-5 w-5" />
-                    Kapat
-                  </>
-                ) : (
-                  <>
-                    <Menu className="h-5 w-5" />
-                    Menü
-                  </>
-                )}
-              </button>
-              <Link
-                href="/ara"
-                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-3.5 sm:p-4 text-white transition hover:border-green-400/40"
-                aria-label="Ara"
-              >
-                <Search className="h-5 w-5" />
+          <nav className="hidden lg:flex items-center space-x-6">
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="nav-link">
+                {link.label}
               </Link>
-            </div>
-          </div>
-
-          {isExploreOpen && (
-            <div className="pb-6">
-              <div className="flex items-center justify-between pb-3">
-                <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-green-200/80">
-                  <Sparkles className="h-4 w-4" />
-                  Keşfet
-                </div>
-                <div className="text-xs text-zinc-400 hidden md:block">Kaydırarak tüm bölümlere ulaş</div>
-                <div className="text-xs text-zinc-400 md:hidden">Keşif menüsünü aç</div>
-              </div>
-
-            <div
-              id="navbar-menu"
-              className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-black/30 p-4 md:flex md:flex-row md:gap-4 md:rounded-none md:border-0 md:bg-transparent md:p-0 md:overflow-x-auto md:pb-2 md:scrollbar-thin md:scrollbar-thumb-green-500/50 md:scrollbar-track-zinc-900/80 md:snap-x md:snap-mandatory"
+            ))}
+            <Link
+              href="/ara"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-200 transition hover:border-green-400/50 hover:text-green-200"
             >
-              <div className="snap-start w-full min-w-0 rounded-2xl border border-zinc-800/60 bg-zinc-900/95 p-4 shadow-xl md:min-w-[260px] md:w-auto">
-                <div className="flex items-center justify-between text-xs uppercase tracking-wide text-zinc-400">
-                  <span>İçerik</span>
-                  <Sparkles className="h-4 w-4 text-green-300" />
-                </div>
-                <div className="mt-3 space-y-2">
-                  {contentLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 md:text-base"
-                    >
-                      {link.label}
-                      <Sparkles className="h-4 w-4 text-green-300" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
+              <Search className="h-4 w-4" />
+              Ara
+            </Link>
+          </nav>
 
-              <div className="snap-start w-full min-w-0 rounded-2xl border border-zinc-800/60 bg-zinc-900/95 p-4 shadow-xl md:min-w-[260px] md:w-auto">
-                <div className="flex items-center justify-between text-xs uppercase tracking-wide text-zinc-400">
-                  <span>Topluluk</span>
-                  <Sparkles className="h-4 w-4 text-green-300" />
-                </div>
-                <div className="mt-3 space-y-2">
-                  {communityLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 md:text-base"
-                    >
-                      {link.label}
-                      <Sparkles className="h-4 w-4 text-green-300" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="snap-start w-full min-w-0 rounded-2xl border border-green-500/30 bg-green-500/10 p-4 shadow-xl shadow-green-500/20 md:min-w-[260px] md:w-auto">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-green-100">
-                  <Sparkles className="h-4 w-4" />
-                  Hesap ve Kısayollar
-                </div>
-                <p className="mt-2 text-sm text-green-100/80">Giriş yaparak kişiselleştirilmiş içerikleri ve forum özelliklerini aç.</p>
-                <div className="mt-3 grid grid-cols-1 gap-2">
-                  {!loading && (
-                    <>
-                      {user ? (
-                        <>
-                          <Link
-                            href="/account"
-                            className="flex items-center justify-between rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:border-green-400/60 hover:bg-white/20"
-                          >
-                            Hesap Ayarları
-                            <Sparkles className="h-4 w-4 text-green-200" />
-                          </Link>
-                          <button
-                            onClick={async () => {
-                              await signOut();
-                              window.location.href = '/';
-                            }}
-                            className="flex items-center justify-between rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-100 transition hover:border-red-400/80 hover:bg-red-500/20"
-                          >
-                            Çıkış
-                            <Sparkles className="h-4 w-4 text-red-100" />
-                          </button>
-                        </>
-                      ) : (
-                        <div className="flex flex-col gap-4 rounded-2xl border border-green-500/30 bg-green-500/10 p-4 shadow-lg shadow-green-500/20">
-                          <div className="space-y-2">
-                            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-green-200">
-                              <Sparkles className="h-4 w-4" />
-                              Yeni İçerikler
-                            </div>
-                            <p className="text-lg font-bold text-white">Güncel duyurular ve topluluk etkinliklerini kaçırma.</p>
-                            <p className="text-sm text-green-100/80">
-                              Blog yazıları, videolar ve topluluk duyurularını tek bir geniş panelden keşfet. Menüyü kapatmadan içeriklere hızlıca geçiş yap.
-                            </p>
-                          </div>
-                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            {['Duyurular', 'Topluluk', 'Projeler', 'Çekilişler'].map((item) => (
-                              <Link
-                                key={item}
-                                href={`/${item.toLowerCase()}`}
-                                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:border-green-400/60 hover:bg-white/10"
-                              >
-                                {item}
-                                <Sparkles className="h-4 w-4 text-green-200" />
-                              </Link>
-                            ))}
-                          </div>
-                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <Link
-                              href="/login"
-                              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:border-green-400/60 hover:bg-white/10"
-                            >
-                              Giriş Yap
-                              <Sparkles className="h-4 w-4 text-green-200" />
-                            </Link>
-                            <Link
-                              href="/register"
-                              className="flex items-center justify-between rounded-xl border border-green-500/60 bg-green-500/20 px-4 py-3 text-sm font-semibold text-green-100 transition hover:bg-green-500/30"
-                            >
-                              Hesap Oluştur
-                              <Sparkles className="h-4 w-4 text-green-200" />
-                            </Link>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  <Link
-                    href="/ara"
-                    className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:border-green-400/50 hover:bg-white/10"
-                  >
-                    Arama
-                    <span className="text-xs text-zinc-200">⌘K</span>
-                  </Link>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-green-100/80">
-                  <span className="rounded-full bg-white/10 px-3 py-1">Hızlı erişim</span>
-                  <span className="rounded-full bg-white/10 px-3 py-1">Mobil uyumlu</span>
-                  <span className="rounded-full bg-white/10 px-3 py-1">Kaydırılabilir</span>
-                </div>
-              </div>
-
-              <div className="snap-start w-full min-w-0 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-lg md:min-w-[260px] md:w-auto">
-                <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                  <Sparkles className="h-4 w-4 text-green-200" />
-                  Güncel Başlıklar
-                </div>
-                <div className="mt-3 grid grid-cols-1 gap-2">
-                  {['Duyurular', 'Forum', 'Projeler', 'Çekilişler'].map((item) => (
-                    <Link
-                      key={item}
-                      href={`/${item.toLowerCase()}`}
-                      className="flex items-center justify-between rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-3 text-sm font-semibold text-white transition hover:border-green-400/50 hover:bg-white/10"
-                    >
-                      <span>{item}</span>
-                      <Sparkles className="h-4 w-4 text-green-200" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-            </div>
-          )}
+          <button
+            onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+            className="lg:hidden inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2 text-white transition hover:border-green-400/40"
+            aria-label="Menü"
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
       </div>
+
+      {isMobileMenuOpen && (
+        <div className="lg:hidden border-t border-white/10 bg-zinc-950/95 backdrop-blur-xl">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block rounded-xl px-4 py-3 text-base font-semibold text-white transition hover:bg-white/5"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Link
+              href="/ara"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block rounded-xl px-4 py-3 text-base font-semibold text-white transition hover:bg-white/5"
+            >
+              Ara
+            </Link>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        .nav-link {
+          position: relative;
+          padding: 0.6rem 0.4rem;
+          color: rgb(226 232 240);
+          font-weight: 600;
+          letter-spacing: 0.01em;
+          transition: color 0.3s ease;
+        }
+        .nav-link::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          bottom: -6px;
+          height: 2px;
+          width: 0;
+          background: linear-gradient(90deg, rgba(74, 222, 128, 0.8), rgba(16, 185, 129, 0.8));
+          transition: width 0.3s ease;
+        }
+        .nav-link:hover {
+          color: rgb(110 231 183);
+        }
+        .nav-link:hover::after {
+          width: 100%;
+        }
+      `}</style>
     </header>
   );
 }

@@ -197,188 +197,6 @@ INSERT INTO blog_categories (name, slug) VALUES
   ('Eğitim', 'egitim')
 ON CONFLICT (slug) DO NOTHING;
 
--- Source: 20251201100000_extend_forum_roles.sql
-
--- profiles table
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role text NOT NULL DEFAULT 'user' CHECK (role IN ('admin','moderator','user')),
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
--- categories and forums
-CREATE TABLE IF NOT EXISTS public.forum_categories (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  slug text NOT NULL UNIQUE,
-  description text,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS public.forum_forums (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  category_id uuid NOT NULL REFERENCES forum_categories(id) ON DELETE CASCADE,
-  name text NOT NULL,
-  slug text NOT NULL,
-  description text,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(category_id, slug)
-);
-
--- threads and posts
-CREATE TABLE IF NOT EXISTS public.forum_threads (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  forum_id uuid NOT NULL REFERENCES forum_forums(id) ON DELETE CASCADE,
-  title text NOT NULL,
-  slug text,
-  body text NOT NULL,
-  tags text[] DEFAULT '{}',
-  status text NOT NULL DEFAULT 'open',
-  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_by_email text,
-  google_connected boolean DEFAULT false,
-  solution_reply_id uuid,
-  last_activity_at timestamptz NOT NULL DEFAULT now(),
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  view_count integer NOT NULL DEFAULT 0,
-  is_locked boolean DEFAULT false,
-  UNIQUE (forum_id, slug)
-);
-
-CREATE TABLE IF NOT EXISTS public.forum_posts (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  thread_id uuid NOT NULL REFERENCES forum_threads(id) ON DELETE CASCADE,
-  author_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  author_email text,
-  body text NOT NULL,
-  is_solution boolean DEFAULT false,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-
--- likes and notifications
-CREATE TABLE IF NOT EXISTS public.forum_post_likes (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  post_id uuid NOT NULL REFERENCES forum_posts(id) ON DELETE CASCADE,
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(post_id, user_id)
-);
-
-CREATE TABLE IF NOT EXISTS public.forum_notifications (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  payload jsonb NOT NULL DEFAULT '{}',
-  is_read boolean DEFAULT false,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS public.forum_reports (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  post_id uuid REFERENCES forum_posts(id) ON DELETE CASCADE,
-  thread_id uuid REFERENCES forum_threads(id) ON DELETE CASCADE,
-  reporter_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  reason text NOT NULL,
-  status text NOT NULL DEFAULT 'open',
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
--- indexes
-CREATE INDEX IF NOT EXISTS idx_forum_categories_slug ON forum_categories(slug);
-CREATE INDEX IF NOT EXISTS idx_forum_forums_slug ON forum_forums(slug);
-CREATE INDEX IF NOT EXISTS idx_forum_threads_slug ON forum_threads(slug);
-CREATE INDEX IF NOT EXISTS idx_forum_threads_created_at ON forum_threads(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_forum_posts_created_at ON forum_posts(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_forum_likes_post ON forum_post_likes(post_id);
-CREATE INDEX IF NOT EXISTS idx_forum_notifications_user ON forum_notifications(user_id, created_at DESC);
-
--- trigger helpers
-CREATE OR REPLACE FUNCTION public.handle_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_forum_threads_updated_at ON forum_threads;
-CREATE TRIGGER trg_forum_threads_updated_at
-  BEFORE UPDATE ON forum_threads
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
-DROP TRIGGER IF EXISTS trg_forum_posts_updated_at ON forum_posts;
-CREATE TRIGGER trg_forum_posts_updated_at
-  BEFORE UPDATE ON forum_posts
-  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
--- auto profile provisioning
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles(id)
-  VALUES (NEW.id)
-  ON CONFLICT (id) DO NOTHING;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
--- RLS enablement
-ALTER TABLE IF EXISTS public.forum_categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.forum_forums ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.forum_threads ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.forum_posts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.forum_post_likes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.forum_notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.forum_reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.profiles ENABLE ROW LEVEL SECURITY;
-
--- policies: public read
-CREATE POLICY IF NOT EXISTS "Public read categories" ON public.forum_categories FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Public read forums" ON public.forum_forums FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Public read threads" ON public.forum_threads FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Public read posts" ON public.forum_posts FOR SELECT USING (true);
-
--- authenticated write and role-aware moderation
-CREATE POLICY IF NOT EXISTS "Authenticated manage categories" ON public.forum_categories
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Authenticated manage forums" ON public.forum_forums
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Authenticated write threads" ON public.forum_threads
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
-CREATE POLICY IF NOT EXISTS "Authenticated update threads" ON public.forum_threads
-  FOR UPDATE TO authenticated USING (auth.uid() = created_by OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('admin','moderator')));
-CREATE POLICY IF NOT EXISTS "Authenticated delete threads" ON public.forum_threads
-  FOR DELETE TO authenticated USING (auth.uid() = created_by OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));
-
-CREATE POLICY IF NOT EXISTS "Authenticated write posts" ON public.forum_posts
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = author_id);
-CREATE POLICY IF NOT EXISTS "Authenticated update posts" ON public.forum_posts
-  FOR UPDATE TO authenticated USING (auth.uid() = author_id OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('admin','moderator')));
-CREATE POLICY IF NOT EXISTS "Authenticated delete posts" ON public.forum_posts
-  FOR DELETE TO authenticated USING (auth.uid() = author_id OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));
-
-CREATE POLICY IF NOT EXISTS "Authenticated manage likes" ON public.forum_post_likes
-  FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY IF NOT EXISTS "Authenticated manage notifications" ON public.forum_notifications
-  FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY IF NOT EXISTS "Authenticated manage reports" ON public.forum_reports
-  FOR ALL TO authenticated USING (auth.uid() = reporter_id OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('admin','moderator')))
-  WITH CHECK (auth.uid() = reporter_id OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role IN ('admin','moderator')));
-
-CREATE POLICY IF NOT EXISTS "Users read own profile" ON public.profiles FOR SELECT
-  USING (id = auth.uid() OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));
-CREATE POLICY IF NOT EXISTS "Admins manage profiles" ON public.profiles FOR ALL TO authenticated
-  USING (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin'))
-  WITH CHECK (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin'));
-
 -- Insert default site settings
 INSERT INTO site_settings (key, value) VALUES
   ('youtube_channel_id', '{}'),
@@ -730,7 +548,6 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   bio text,
   avatar_url text,
   website text,
-  role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'moderator', 'admin')),
   achievements jsonb DEFAULT '[]'::jsonb,
   preferences jsonb DEFAULT '{}'::jsonb,
   created_at timestamptz DEFAULT now(),
@@ -870,16 +687,6 @@ ALTER TABLE blog_post_ratings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_analytics ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for user_profiles
-CREATE OR REPLACE FUNCTION app_is_admin()
-RETURNS boolean
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  RETURN EXISTS (SELECT 1 FROM user_profiles WHERE id = auth.uid() AND role = 'admin');
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE POLICY "Anyone can view profiles"
   ON user_profiles FOR SELECT
   USING (true);
@@ -887,19 +694,13 @@ CREATE POLICY "Anyone can view profiles"
 CREATE POLICY "Users can update own profile"
   ON user_profiles FOR UPDATE
   TO authenticated
-  USING (auth.uid() = id AND (role = 'user' OR app_is_admin()))
-  WITH CHECK (auth.uid() = id AND (role = 'user' OR app_is_admin()));
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Users can insert own profile"
   ON user_profiles FOR INSERT
   TO authenticated
-  WITH CHECK (auth.uid() = id AND (role = 'user' OR app_is_admin()));
-
-CREATE POLICY "Admins can manage profiles"
-  ON user_profiles FOR ALL
-  TO authenticated
-  USING (app_is_admin())
-  WITH CHECK (app_is_admin());
+  WITH CHECK (auth.uid() = id);
 
 -- RLS Policies for user_bookmarks
 CREATE POLICY "Users can view own bookmarks"
@@ -1705,108 +1506,3 @@ CREATE POLICY "Authenticated users can delete announcements"
   TO authenticated
   USING (auth.role() = 'authenticated');
 
--- Source: 20251125120000_add_user_roles_and_seed_admin.sql
-
-/*
-  # Strengthen user role management and seed admin account
-
-  - Add `role` column to `user_profiles` with explicit allowed values
-  - Introduce `app_is_admin()` helper for reusable admin checks
-  - Harden RLS so only admins can set elevated roles
-  - Seed an admin account for bam@gmail.com and ensure their profile is marked as admin
-*/
-
--- Add role column to user_profiles and enforce admin-controlled elevation
-ALTER TABLE user_profiles
-  ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'moderator', 'admin'));
-
--- Helper function for admin checks
-CREATE OR REPLACE FUNCTION app_is_admin()
-RETURNS boolean
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  RETURN EXISTS (SELECT 1 FROM user_profiles WHERE id = auth.uid() AND role = 'admin');
-END;
-$$ LANGUAGE plpgsql;
-
--- Refresh user profile policies to prevent unauthorized role escalation
-DROP POLICY IF EXISTS "Admins can manage profiles" ON user_profiles;
-DROP POLICY IF EXISTS "Users can insert own profile" ON user_profiles;
-DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
-DROP POLICY IF EXISTS "Anyone can view profiles" ON user_profiles;
-
-CREATE POLICY "Anyone can view profiles"
-  ON user_profiles FOR SELECT
-  USING (true);
-
-CREATE POLICY "Users can update own profile"
-  ON user_profiles FOR UPDATE
-  TO authenticated
-  USING (auth.uid() = id AND (role = 'user' OR app_is_admin()))
-  WITH CHECK (auth.uid() = id AND (role = 'user' OR app_is_admin()));
-
-CREATE POLICY "Users can insert own profile"
-  ON user_profiles FOR INSERT
-  TO authenticated
-  WITH CHECK (auth.uid() = id AND (role = 'user' OR app_is_admin()));
-
-CREATE POLICY "Admins can manage profiles"
-  ON user_profiles FOR ALL
-  TO authenticated
-  USING (app_is_admin())
-  WITH CHECK (app_is_admin());
-
--- Seed admin user for bam@gmail.com
-DO $$
-DECLARE
-  v_user_id uuid;
-BEGIN
-  INSERT INTO auth.users (id, email, raw_user_meta_data, raw_app_meta_data, aud, role, encrypted_password,
-                          email_confirmed_at, last_sign_in_at, created_at, updated_at)
-  VALUES (
-    gen_random_uuid(),
-    'bam@gmail.com',
-    '{}'::jsonb,
-    jsonb_build_object('provider', 'email', 'providers', ARRAY['email']),
-    'authenticated',
-    'authenticated',
-    crypt('ChangeMeNow123!', gen_salt('bf')),
-    now(),
-    now(),
-    now(),
-    now()
-  )
-  ON CONFLICT (email) DO UPDATE
-    SET email = EXCLUDED.email
-  RETURNING id INTO v_user_id;
-
-  IF v_user_id IS NULL THEN
-    SELECT id INTO v_user_id FROM auth.users WHERE email = 'bam@gmail.com';
-  END IF;
-
-  INSERT INTO auth.identities (id, user_id, provider, provider_id, identity_data, last_sign_in_at, created_at, updated_at)
-  VALUES (
-    gen_random_uuid(),
-    v_user_id,
-    'email',
-    'bam@gmail.com',
-    jsonb_build_object('sub', v_user_id::text, 'email', 'bam@gmail.com'),
-    now(),
-    now(),
-    now()
-  )
-  ON CONFLICT (provider, provider_id) DO UPDATE
-    SET last_sign_in_at = EXCLUDED.last_sign_in_at,
-        identity_data   = EXCLUDED.identity_data,
-        updated_at      = now();
-
-  INSERT INTO public.user_profiles (id, display_name, role, created_at, updated_at)
-  VALUES (v_user_id, 'Bam', 'admin', now(), now())
-  ON CONFLICT (id) DO UPDATE
-    SET role = 'admin',
-        display_name = EXCLUDED.display_name,
-        updated_at = now();
-END;
-$$;

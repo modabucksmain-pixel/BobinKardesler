@@ -4,44 +4,14 @@
 
 @layer base {
   :root {
-    --background-color: #050a08;
-    --foreground-color: #e5e7eb;
+    --background-color: #0b1224;
   }
 
   body {
     background-color: var(--background-color);
-    color: var(--foreground-color);
     @apply text-zinc-100;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    transition: background-color 300ms ease, color 200ms ease;
-  }
-
-  body[data-forum-theme='dark'] {
-    background-color: #050505;
-    color: #e5e7eb;
-  }
-
-  body[data-forum-theme='light'] {
-    background-color: #f8fafc;
-    color: #0f172a;
-  }
-}
-
-@layer components {
-  .forum-card {
-    @apply text-white;
-  }
-
-  .forum-muted {
-    @apply text-zinc-300;
-  }
-
-  body[data-forum-theme='light'] .forum-card {
-    @apply text-slate-900;
-  }
-
-  body[data-forum-theme='light'] .forum-muted {
-    @apply text-slate-600;
+    transition: background-color 300ms ease;
   }
 }
 
@@ -82,15 +52,6 @@
   .glass-card {
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-  }
-
-  .scrollbar-hidden {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .scrollbar-hidden::-webkit-scrollbar {
-    display: none;
   }
 }
 

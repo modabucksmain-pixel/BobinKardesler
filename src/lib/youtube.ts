@@ -39,7 +39,7 @@ async function getCachedData<T>(cacheKey: string): Promise<T | null> {
   return data.data as T;
 }
 
-async function setCachedData<T>(cacheKey: string, data: T): Promise<void> {
+async function setCachedData(cacheKey: string, data: any): Promise<void> {
   const expiresAt = new Date(Date.now() + CACHE_DURATION).toISOString();
 
   await supabase
@@ -155,11 +155,7 @@ function parseDurationToSeconds(duration: string): number {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-type Thumbnail = { url?: string; width?: number; height?: number };
-
-type Thumbnails = Record<string, Thumbnail | undefined>;
-
-function getPreferredThumbnail(thumbnails: Thumbnails): { url: string; width?: number; height?: number } {
+function getPreferredThumbnail(thumbnails: any): { url: string; width?: number; height?: number } {
   const preferenceOrder = ['maxres', 'standard', 'high', 'medium', 'default'];
   for (const key of preferenceOrder) {
     const option = thumbnails?.[key];
@@ -169,28 +165,6 @@ function getPreferredThumbnail(thumbnails: Thumbnails): { url: string; width?: n
   }
 
   return { url: '' };
-}
-
-interface SearchItem {
-  id: { videoId: string };
-}
-
-interface VideoItem {
-  id: string;
-  snippet: {
-    title: string;
-    description: string;
-    thumbnails?: Thumbnails;
-    publishedAt: string;
-  };
-  statistics: {
-    viewCount?: string;
-    likeCount?: string;
-    commentCount?: string;
-  };
-  contentDetails?: {
-    duration?: string;
-  };
 }
 
 export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeVideo[]> {
@@ -229,7 +203,7 @@ export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeV
       return [];
     }
 
-    const videoIds = searchData.items?.map((item: SearchItem) => item.id.videoId).join(',');
+    const videoIds = searchData.items?.map((item: any) => item.id.videoId).join(',');
 
     if (!videoIds) return [];
 
@@ -242,7 +216,7 @@ export async function getLatestVideos(maxResults: number = 12): Promise<YouTubeV
     const videosData = await videosResponse.json();
 
     const videos: YouTubeVideo[] =
-      videosData.items?.map((item: VideoItem) => ({
+      videosData.items?.map((item: any) => ({
         id: item.id,
         title: item.snippet.title,
         description: item.snippet.description,

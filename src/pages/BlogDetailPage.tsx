@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Calendar, Clock, Eye, ArrowLeft } from 'lucide-react';
 import { formatDate } from '../lib/youtube';
@@ -21,7 +21,11 @@ export function BlogDetailPage({ slug }: { slug: string }) {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadPost = useCallback(async () => {
+  useEffect(() => {
+    loadPost();
+  }, [slug]);
+
+  async function loadPost() {
     setLoading(true);
     const { data } = await supabase
       .from('blog_posts')
@@ -38,11 +42,7 @@ export function BlogDetailPage({ slug }: { slug: string }) {
         .eq('id', data.id);
     }
     setLoading(false);
-  }, [slug]);
-
-  useEffect(() => {
-    loadPost();
-  }, [loadPost]);
+  }
 
   if (loading) {
     return (

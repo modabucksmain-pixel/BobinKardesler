@@ -19,7 +19,7 @@ export function CommunityPage() {
   }
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 pb-12 sm:pb-20">
+    <div className="min-h-screen pt-20 sm:pt-24 pb-12 sm:pb-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 sm:mb-12 text-center">
           <div className="inline-block p-3 sm:p-4 bg-green-500/10 rounded-full mb-4 sm:mb-6">

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Wrench, Github, Play, Heart, Eye, Filter } from 'lucide-react';
 import { getAllProjects, type Project, difficultyLabels, difficultyColors } from '../lib/projects';
 
@@ -9,14 +9,22 @@ export function ProjectsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
 
-  const loadProjects = useCallback(async () => {
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  useEffect(() => {
+    filterProjects();
+  }, [projects, selectedCategory, selectedDifficulty]);
+
+  async function loadProjects() {
     setLoading(true);
     const data = await getAllProjects();
     setProjects(data);
     setLoading(false);
-  }, []);
+  }
 
-  const filterProjects = useCallback(() => {
+  function filterProjects() {
     let filtered = [...projects];
 
     if (selectedCategory !== 'all') {
@@ -28,20 +36,12 @@ export function ProjectsPage() {
     }
 
     setFilteredProjects(filtered);
-  }, [projects, selectedCategory, selectedDifficulty]);
-
-  useEffect(() => {
-    loadProjects();
-  }, [loadProjects]);
-
-  useEffect(() => {
-    filterProjects();
-  }, [filterProjects]);
+  }
 
   const categories = [...new Set(projects.map(p => p.category))];
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 pb-12 sm:pb-20">
+    <div className="min-h-screen pt-20 sm:pt-24 pb-12 sm:pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 sm:mb-12 text-center">
           <div className="inline-block p-3 sm:p-4 bg-green-500/10 rounded-full mb-4 sm:mb-6">

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BarChart3, Plus, Edit, Trash2, ArrowLeft, Users } from 'lucide-react';
-import { useAdminGuard } from '../../lib/admin';
 
 interface Poll {
   id: string;
@@ -12,14 +12,32 @@ interface Poll {
   created_at: string;
 }
 
+interface PollOption {
+  id: string;
+  poll_id: string;
+  option_text: string;
+  vote_count: number;
+  position: number;
+}
+
 export function PollsAdminPage() {
-  const { user, isAdmin, checking } = useAdminGuard();
+  const { user, loading: authLoading } = useAuth();
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingPoll, setEditingPoll] = useState<Poll | null>(null);
 
-  const loadPolls = useCallback(async () => {
+  useEffect(() => {
+    if (!authLoading && !user) {
+      window.location.href = '/admin/login';
+      return;
+    }
+    if (!authLoading && user) {
+      loadPolls();
+    }
+  }, [user, authLoading]);
+
+  async function loadPolls() {
     setLoading(true);
     const { data } = await supabase
       .from('polls')
@@ -28,17 +46,7 @@ export function PollsAdminPage() {
 
     if (data) setPolls(data);
     setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (!checking && (!user || !isAdmin)) {
-      window.location.href = '/admin/login';
-      return;
-    }
-    if (!checking && user && isAdmin) {
-      loadPolls();
-    }
-  }, [user, checking, isAdmin, loadPolls]);
+  }
 
   async function handleDelete(id: string) {
     if (!confirm('Bu anketi silmek istediğinizden emin misiniz?')) return;
@@ -60,7 +68,16 @@ export function PollsAdminPage() {
     loadPolls();
   }
 
-  if (checking || !user || !isAdmin) {
+  async function getTotalVotes(pollId: string): Promise<number> {
+    const { data } = await supabase
+      .from('poll_options')
+      .select('vote_count')
+      .eq('poll_id', pollId);
+
+    return data?.reduce((sum, opt) => sum + opt.vote_count, 0) || 0;
+  }
+
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
@@ -159,7 +176,11 @@ function PollCard({
 }) {
   const [totalVotes, setTotalVotes] = useState(0);
 
-  const loadVotes = useCallback(async () => {
+  useEffect(() => {
+    loadVotes();
+  }, []);
+
+  async function loadVotes() {
     const { data } = await supabase
       .from('poll_options')
       .select('vote_count')
@@ -167,11 +188,7 @@ function PollCard({
 
     const total = data?.reduce((sum, opt) => sum + opt.vote_count, 0) || 0;
     setTotalVotes(total);
-  }, [poll.id]);
-
-  useEffect(() => {
-    loadVotes();
-  }, [loadVotes]);
+  }
 
   const isExpired = new Date(poll.end_date) < new Date();
 
@@ -255,7 +272,13 @@ function PollModal({
   const [options, setOptions] = useState<string[]>(['', '']);
   const [loading, setLoading] = useState(false);
 
-  const loadOptions = useCallback(async () => {
+  useEffect(() => {
+    if (poll) {
+      loadOptions();
+    }
+  }, [poll]);
+
+  async function loadOptions() {
     if (!poll) return;
     const { data } = await supabase
       .from('poll_options')
@@ -266,13 +289,7 @@ function PollModal({
     if (data) {
       setOptions(data.map(o => o.option_text));
     }
-  }, [poll]);
-
-  useEffect(() => {
-    if (poll) {
-      loadOptions();
-    }
-  }, [poll, loadOptions]);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

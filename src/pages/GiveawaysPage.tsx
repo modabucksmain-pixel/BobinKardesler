@@ -1,34 +1,21 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Gift, Calendar, Users, CheckCircle, Mail, User } from 'lucide-react';
 import { getActiveGiveaways, participateInGiveaway, type Giveaway } from '../lib/giveaways';
-import { useNotification } from '../contexts/NotificationContext';
 
 export function GiveawaysPage() {
   const [giveaways, setGiveaways] = useState<Giveaway[]>([]);
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { error: showError } = useNotification();
-
-  const loadGiveaways = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const data = await getActiveGiveaways();
-      setGiveaways(data);
-    } catch (error) {
-      console.error('Active giveaways load error', error);
-      const message = 'Beklenmeyen bir hata oluştu, lütfen daha sonra tekrar dene.';
-      setErrorMessage(message);
-      showError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, [showError]);
 
   useEffect(() => {
     loadGiveaways();
-  }, [loadGiveaways]);
+  }, []);
+
+  async function loadGiveaways() {
+    setLoading(true);
+    const data = await getActiveGiveaways();
+    setGiveaways(data);
+    setLoading(false);
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-20">
@@ -44,12 +31,6 @@ export function GiveawaysPage() {
             Bobin Kardeşler topluluğu için düzenlenen çekilişlere katıl, harika ödüller kazan!
           </p>
         </div>
-
-        {errorMessage && (
-          <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100 text-sm">
-            {errorMessage}
-          </div>
-        )}
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { getAllGiveaways, getGiveawayParticipants, selectRandomWinner, type Giveaway, type GiveawayParticipant } from '../../lib/giveaways';
 import { Gift, Plus, Users, Trophy, Calendar, Trash2, Eye } from 'lucide-react';
-import { useAdminGuard } from '../../lib/admin';
 
 export function GiveawaysAdminPage() {
-  const { user, isAdmin, checking } = useAdminGuard();
+  const { user, loading: authLoading } = useAuth();
   const [giveaways, setGiveaways] = useState<Giveaway[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -13,14 +13,14 @@ export function GiveawaysAdminPage() {
   const [participants, setParticipants] = useState<GiveawayParticipant[]>([]);
 
   useEffect(() => {
-    if (!checking && (!user || !isAdmin)) {
+    if (!authLoading && !user) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!checking && user && isAdmin) {
+    if (!authLoading && user) {
       loadGiveaways();
     }
-  }, [user, checking, isAdmin]);
+  }, [user, authLoading]);
 
   async function loadGiveaways() {
     setLoading(true);
@@ -60,7 +60,7 @@ export function GiveawaysAdminPage() {
     setParticipants(data);
   }
 
-  if (checking || !user || !isAdmin) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>

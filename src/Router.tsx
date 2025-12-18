@@ -13,8 +13,7 @@ import { CommunityPage } from './pages/CommunityPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { PollsPage } from './pages/PollsPage';
 import { AnnouncementsPage } from './pages/AnnouncementsPage';
-import { AdminLoginPage } from './pages/admin/LoginPage';
-import { LoginPage } from './pages/LoginPage';
+import { LoginPage } from './pages/admin/LoginPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { BlogListPage } from './pages/admin/BlogListPage';
 import { BlogEditorPage } from './pages/admin/BlogEditorPage';
@@ -28,15 +27,7 @@ import { NewsletterAdminPage } from './pages/admin/NewsletterAdminPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { SiteShell } from './components/SiteShell';
-import { AccountSettingsPage } from './pages/AccountSettingsPage';
-import { ForumCategoryPage } from './pages/forum/ForumCategoryPage';
-import { ForumCreatePage } from './pages/forum/ForumCreatePage';
-import { ForumForumPage } from './pages/forum/ForumForumPage';
-import { ForumLandingPage } from './pages/forum/ForumLandingPage';
-import { ForumLatestPage } from './pages/forum/ForumLatestPage';
-import { ForumThreadPage } from './pages/forum/ForumThreadPage';
-import { ComingSoonPage } from './pages/ComingSoonPage';
+import { ForumPage } from './pages/ForumPage';
 
 export function Router() {
   const [path, setPath] = useState(window.location.pathname);
@@ -80,42 +71,14 @@ export function Router() {
     content = <ProjectsPage />;
   } else if (path === '/anketler') {
     content = <PollsPage />;
-
   } else if (path === '/forum') {
-    content = <ForumLandingPage />;
-  } else if (path === '/forum/kategori') {
-    content = <ForumLandingPage />;
-  } else if (path === '/forum/createforum' || path === '/forum/yeni-konu') {
-    content = <ForumCreatePage />;
-  } else if (path === '/forum/son-konular' || path === '/forum/konu/cevapsiz') {
-    content = <ForumLatestPage />;
-  } else if (path.startsWith('/forum/konu/')) {
-    const cleanedPath = path.replace(/\/?yanit?$/, '');
-    const slugAndId = decodeURIComponent(cleanedPath.replace('/forum/konu/', ''));
-    content = <ForumThreadPage slugAndId={slugAndId} />;
-  } else if (path.startsWith('/forum/kategori/')) {
-    const parts = path.replace('/forum/kategori/', '').split('/').filter(Boolean);
-    if (parts.length >= 2) {
-      content = <ForumForumPage categorySlug={parts[0]} forumSlug={parts[1]} />;
-    } else if (parts.length === 1) {
-      content = <ForumCategoryPage categorySlug={parts[0]} />;
-    } else {
-      content = <ForumLandingPage />;
-    }
+    content = <ForumPage />;
   } else if (path === '/duyurular') {
     content = <AnnouncementsPage />;
   } else if (path === '/hakkimizda') {
     content = <AboutPage />;
-  } else if (path === '/account') {
-    content = <AccountSettingsPage />;
-  } else if (path === '/yakinda') {
-    content = <ComingSoonPage />;
-  } else if (path === '/login') {
-    content = <LoginPage redirectPath="/account" />;
-  } else if (path === '/register') {
-    content = <LoginPage redirectPath="/account" defaultMode="register" />;
   } else if (path === '/admin/login') {
-    content = <AdminLoginPage />;
+    content = <LoginPage />;
   } else if (path === '/admin') {
     content = <AdminDashboard />;
   } else if (path === '/admin/blog') {
@@ -158,17 +121,11 @@ export function Router() {
     );
   }
 
-  const pageContent = (
+  return (
     <>
       {showLayout && <Navbar />}
       {content}
       {showLayout && !isAdminPage && <Footer />}
     </>
   );
-
-  if (isAdminPage) {
-    return pageContent;
-  }
-
-  return <SiteShell>{pageContent}</SiteShell>;
 }

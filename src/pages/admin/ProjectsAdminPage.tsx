@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Wrench, Plus, Edit, Trash2, Eye, Heart, ArrowLeft, Star } from 'lucide-react';
-import { useAdminGuard } from '../../lib/admin';
 
 interface Project {
   id: string;
@@ -20,21 +20,21 @@ interface Project {
 }
 
 export function ProjectsAdminPage() {
-  const { user, isAdmin, checking } = useAdminGuard();
+  const { user, loading: authLoading } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   useEffect(() => {
-    if (!checking && (!user || !isAdmin)) {
+    if (!authLoading && !user) {
       window.location.href = '/admin/login';
       return;
     }
-    if (!checking && user && isAdmin) {
+    if (!authLoading && user) {
       loadProjects();
     }
-  }, [user, checking, isAdmin]);
+  }, [user, authLoading]);
 
   async function loadProjects() {
     setLoading(true);
@@ -66,7 +66,7 @@ export function ProjectsAdminPage() {
     loadProjects();
   }
 
-  if (checking || !user || !isAdmin) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
@@ -298,9 +298,7 @@ function ProjectModal({
               <label className="block text-sm font-medium text-zinc-300 mb-2">Zorluk Seviyesi</label>
               <select
                 value={difficulty}
-                onChange={(e) =>
-                  setDifficulty(e.target.value as 'beginner' | 'intermediate' | 'advanced')
-                }
+                onChange={(e) => setDifficulty(e.target.value as any)}
                 className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-green-500 text-zinc-100"
               >
                 <option value="beginner">Başlangıç</option>

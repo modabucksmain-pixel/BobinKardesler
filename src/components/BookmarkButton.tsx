@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bookmark } from 'lucide-react';
 import { addBookmark, removeBookmark, isBookmarked } from '../lib/bookmarks';
 import { useNotification } from '../contexts/NotificationContext';
@@ -14,14 +14,14 @@ export function BookmarkButton({ contentType, contentId, className = '' }: Bookm
   const [loading, setLoading] = useState(false);
   const { success, error } = useNotification();
 
-  const checkBookmarkStatus = useCallback(async () => {
-    const status = await isBookmarked(contentType, contentId);
-    setBookmarked(status);
-  }, [contentId, contentType]);
-
   useEffect(() => {
     checkBookmarkStatus();
-  }, [checkBookmarkStatus]);
+  }, [contentType, contentId]);
+
+  async function checkBookmarkStatus() {
+    const status = await isBookmarked(contentType, contentId);
+    setBookmarked(status);
+  }
 
   async function handleToggle(e: React.MouseEvent) {
     e.preventDefault();

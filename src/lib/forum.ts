@@ -1,268 +1,248 @@
-export interface ForumCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-}
+import { supabase } from './supabase';
 
-export interface ForumForum {
-  id: string;
-  category_id: string;
-  name: string;
-  slug: string;
-  description?: string;
-}
-
-export type ForumThreadStatus = 'open' | 'in_progress' | 'resolved';
+export type ForumStatus = 'open' | 'in_progress' | 'resolved';
 
 export interface ForumThread {
   id: string;
   title: string;
   body: string;
-  slug?: string;
-  category?: ForumCategory;
-  forum?: ForumForum;
+  tags: string[];
+  status: ForumStatus;
+  created_by: string | null;
+  created_by_email: string | null;
+  google_connected: boolean;
+  solution_reply_id: string | null;
+  last_activity_at: string;
   created_at: string;
-  created_by?: string;
+  updated_at: string;
+  view_count: number;
+  is_locked: boolean;
   reply_count?: number;
-  is_locked?: boolean;
-  view_count?: number;
-  status?: ForumThreadStatus;
-  google_connected?: boolean;
 }
 
 export interface ForumReply {
   id: string;
   thread_id: string;
   body: string;
-  author_id: string;
+  author_id: string | null;
   author_email: string | null;
+  is_admin_response: boolean;
+  is_solution: boolean;
   created_at: string;
-  is_solution?: boolean;
+  updated_at: string;
 }
 
-type ServiceResult<T> = { data: T | null; error: Error | null };
-
-function createId(prefix: string) {
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-const categories: ForumCategory[] = [
-  { id: 'cat-1', name: 'Duyurular', slug: 'duyurular', description: 'Site ve topluluk duyuruları' },
-  { id: 'cat-2', name: 'Topluluk', slug: 'topluluk', description: 'Genel sohbet ve tanışma' },
-];
-
-const forums: ForumForum[] = [
-  { id: 'forum-1', category_id: 'cat-1', name: 'Site Duyuruları', slug: 'site-duyurulari' },
-  { id: 'forum-2', category_id: 'cat-2', name: 'Genel Sohbet', slug: 'genel-sohbet' },
-];
-
-const threads: ForumThread[] = [
+const mockThreads: ForumThread[] = [
   {
-    id: 'thread-1',
-    title: 'Yeni forum yapısı yayında!',
-    body: 'Kategori ve alt forumlarla tasarlanan yeni forum deneyimini keşfedin.',
-    slug: 'yeni-forum-yapisi',
-    category: categories[0],
-    forum: forums[0],
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-    reply_count: 2,
-    created_by: 'admin',
-    view_count: 120,
+    id: 'mock-1',
+    title: 'ESP32 ile Wi-Fi bağlantısı kopuyor, nasıl stabil hale getirebilirim?',
+    body: 'Evdeki router ile bağlantı 5-10 dakikada bir düşüyor. Güç kaynağını değiştirdim, firmware güncel ama sorun devam ediyor. Hangi kütüphane/ayar ile toparlayabilirim?',
+    tags: ['iot', 'esp32', 'wifi'],
     status: 'in_progress',
+    created_by: null,
+    created_by_email: 'maker@technopat',
     google_connected: true,
+    solution_reply_id: 'mock-r-2',
+    last_activity_at: new Date().toISOString(),
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    view_count: 148,
+    is_locked: false,
+    reply_count: 5,
   },
   {
-    id: 'thread-2',
-    title: 'Projelerinizde kullandığınız en sevdiğiniz sensör hangisi?',
-    body: 'Arduino veya Raspberry Pi projelerinde vazgeçilmeziniz olan sensörü paylaşın.',
-    slug: 'favori-sensorler',
-    category: categories[1],
-    forum: forums[1],
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    reply_count: 4,
-    view_count: 85,
+    id: 'mock-2',
+    title: 'UPS sonrası PC açılmıyor, güç hattında nelere bakmalıyım?',
+    body: 'Servisten yeni gelen UPS ile denedikten sonra masaüstü hiç tepki vermiyor. Güç butonu LED yanıyor ama fanlar dönmüyor. Kart üzerinde hangi ölçümleri yapmalıyım?',
+    tags: ['donanım', 'pc-tamir', 'güç'],
     status: 'open',
+    created_by: null,
+    created_by_email: 'poweruser@technopat',
+    google_connected: false,
+    solution_reply_id: null,
+    last_activity_at: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(),
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 40).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(),
+    view_count: 86,
+    is_locked: false,
+    reply_count: 2,
   },
   {
-    id: 'thread-3',
-    title: '3D yazıcı ile en pratik baskı ipuçları',
-    body: 'PLA, PETG veya ABS baskılarınızda uyguladığınız püf noktalarını listeleyin.',
-    slug: '3d-yazici-ipuclari',
-    category: categories[1],
-    forum: forums[1],
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    reply_count: 1,
-    view_count: 40,
+    id: 'mock-3',
+    title: '3D yazıcı nozzle tıkanması için kalıcı çözüm arıyorum',
+    body: 'PLA baskılarda 3-4 saat sonra nozzle tıkanıyor. Filament kalınlığı ve sepet sıcaklığını kontrol ettim. Bowden tüpü yeni. Kalibrasyon için öneri var mı?',
+    tags: ['3d-yazıcı', 'bakım', 'pla'],
     status: 'resolved',
+    created_by: null,
+    created_by_email: 'printguru@technopat',
+    google_connected: true,
+    solution_reply_id: 'mock-r-5',
+    last_activity_at: new Date(Date.now() - 1000 * 60 * 60 * 60).toISOString(),
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 60).toISOString(),
+    view_count: 233,
+    is_locked: true,
+    reply_count: 8,
   },
 ];
 
-const replies: ForumReply[] = [
+const mockReplies: ForumReply[] = [
   {
-    id: 'reply-1',
-    thread_id: 'thread-1',
-    body: 'Tasarım gerçekten harika görünüyor, emeği geçenlere teşekkürler!',
-    author_id: 'user-1',
-    author_email: 'user1@example.com',
+    id: 'mock-r-1',
+    thread_id: 'mock-1',
+    body: 'Router loglarında "deauth" görünüyorsa kanal çakışması vardır. 1-6-11 dene, ESP32 tarafında `WiFi.setTxPower(WIFI_POWER_19_5dBm)` ile dengele.',
+    author_id: null,
+    author_email: 'networkfox@technopat',
+    is_admin_response: false,
+    is_solution: false,
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
   },
   {
-    id: 'reply-2',
-    thread_id: 'thread-1',
-    body: 'Mobilde de performans gayet iyi çalışıyor.',
-    author_id: 'user-2',
-    author_email: 'user2@example.com',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+    id: 'mock-r-2',
+    thread_id: 'mock-1',
+    body: 'ESP32 modemle WPA2/WPA3 karma modda sorun çıkarıyor. Routerı WPA2-PSK ya çekip `WiFi.config(INADDR_NONE)` ile DHCP renew aç, bu şekilde 2 saattir düşmedi.',
+    author_id: null,
+    author_email: 'admin@bobinkardesler.com',
+    is_admin_response: true,
     is_solution: true,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+  },
+  {
+    id: 'mock-r-3',
+    thread_id: 'mock-2',
+    body: '12V hattı var mı multimetre ile ölç, yoksa PSU korumaya düşmüş olabilir. Anakartta stand-by LED yanıyor mu kontrol et.',
+    author_id: null,
+    author_email: 'donanimmaster@technopat',
+    is_admin_response: false,
+    is_solution: false,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 38).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 38).toISOString(),
+  },
+  {
+    id: 'mock-r-4',
+    thread_id: 'mock-2',
+    body: 'PSU kablosunu doğrudan prize takınca açılıyor mu? UPS çıkışında sinyal kare dalga ise bazı PSU\'lar tetiklenmiyor.',
+    author_id: null,
+    author_email: 'admin@bobinkardesler.com',
+    is_admin_response: true,
+    is_solution: false,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+  },
+  {
+    id: 'mock-r-5',
+    thread_id: 'mock-3',
+    body: 'Tıkanmayı PETG artığı tetikliyor. Nozzle temizliği sonrası sıcaklık eğrini 5C artırıp retract mesafesini 1.2mm düşür, Bowden bağlantısını PTFE coupler ile sabitle.',
+    author_id: null,
+    author_email: 'admin@bobinkardesler.com',
+    is_admin_response: true,
+    is_solution: true,
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 62).toISOString(),
+    updated_at: new Date(Date.now() - 1000 * 60 * 60 * 62).toISOString(),
   },
 ];
 
-export function getForumCategoriesWithForums(): Promise<ServiceResult<(ForumCategory & { forums: ForumForum[] })[]>> {
-  const data = categories.map((category) => ({
-    ...category,
-    forums: forums.filter((forum) => forum.category_id === category.id),
+export async function getForumThreads() {
+  const { data, error } = await supabase
+    .from('forum_threads')
+    .select('*, forum_replies(count)')
+    .order('last_activity_at', { ascending: false });
+
+  if (error || !data) {
+    console.error('Forum başlıkları alınırken hata:', error);
+    return mockThreads;
+  }
+
+  return data.map((thread: any) => ({
+    ...thread,
+    reply_count: thread.forum_replies?.[0]?.count ?? 0,
   }));
-  return Promise.resolve({ data, error: null });
 }
 
-export function getLatestThreads(limit = 10): ForumThread[] {
-  return threads
-    .slice()
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, limit);
-}
+export async function getForumReplies(threadId: string) {
+  const { data, error } = await supabase
+    .from('forum_replies')
+    .select('*')
+    .eq('thread_id', threadId)
+    .order('created_at', { ascending: true });
 
-export function getForumThreadById(id: string): Promise<ServiceResult<ForumThread>> {
-  const thread = threads.find((t) => t.id === id) || null;
-  return Promise.resolve({ data: thread, error: thread ? null : new Error('Thread not found') });
-}
-
-export function getForumReplies(threadId: string): Promise<ServiceResult<ForumReply[]>> {
-  const threadReplies = replies.filter((reply) => reply.thread_id === threadId);
-  return Promise.resolve({ data: threadReplies, error: null });
-}
-
-export function createForumReply({
-  thread_id,
-  body,
-  author_id,
-  author_email,
-}: {
-  thread_id: string;
-  body: string;
-  author_id: string;
-  author_email: string | null;
-}): Promise<ServiceResult<ForumReply>> {
-  const reply: ForumReply = {
-    id: createId('reply'),
-    thread_id,
-    body,
-    author_id,
-    author_email,
-    created_at: new Date().toISOString(),
-  };
-  replies.push(reply);
-  const thread = threads.find((t) => t.id === thread_id);
-  if (thread) {
-    thread.reply_count = (thread.reply_count || 0) + 1;
-  }
-  return Promise.resolve({ data: reply, error: null });
-}
-
-export function getSimilarThreads({
-  forumId,
-  categoryId,
-  excludeId,
-}: {
-  forumId?: string;
-  categoryId?: string;
-  excludeId?: string;
-}): ForumThread[] {
-  return threads.filter((thread) => {
-    if (excludeId && thread.id === excludeId) return false;
-    if (forumId && thread.forum?.id !== forumId) return false;
-    if (categoryId && thread.category?.id !== categoryId) return false;
-    return true;
-  });
-}
-
-export function getUserForumRole(userId: string): Promise<'admin' | 'moderator' | 'user'> {
-  if (userId === 'admin') return Promise.resolve('admin');
-  return Promise.resolve('user');
-}
-
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '')
-    .slice(0, 60);
-}
-
-export function createForumThread({
-  title,
-  body,
-  category_id,
-  forum_id,
-  author_id,
-}: {
-  title: string;
-  body: string;
-  category_id: string;
-  forum_id: string;
-  author_id?: string;
-}): Promise<ServiceResult<ForumThread>> {
-  const category = categories.find((c) => c.id === category_id);
-  const forum = forums.find((f) => f.id === forum_id);
-
-  if (!category || !forum) {
-    return Promise.resolve({ data: null, error: new Error('Kategori veya forum bulunamadı') });
+  if (error || !data) {
+    console.error('Yanıtlar alınırken hata:', error);
+    return mockReplies.filter((reply) => reply.thread_id === threadId);
   }
 
-  const thread: ForumThread = {
-    id: createId('thread'),
-    title,
-    body,
-    slug: slugify(title) || undefined,
-    category,
-    forum,
-    created_at: new Date().toISOString(),
-    reply_count: 0,
-    view_count: 0,
-    created_by: author_id,
-    status: 'open',
+  return data;
+}
+
+export async function createForumThread(
+  thread: Omit<ForumThread, 'id' | 'created_at' | 'updated_at' | 'last_activity_at' | 'view_count' | 'reply_count'>
+) {
+  const now = new Date().toISOString();
+  const payload = {
+    ...thread,
+    created_at: now,
+    updated_at: now,
+    last_activity_at: now,
   };
 
-  threads.unshift(thread);
+  const { data, error } = await supabase.from('forum_threads').insert(payload).select().single();
 
-  return Promise.resolve({ data: thread, error: null });
-}
-
-export function incrementThreadViewCount(threadId: string) {
-  const thread = threads.find((t) => t.id === threadId);
-  if (thread) {
-    thread.view_count = (thread.view_count || 0) + 1;
-  }
-}
-
-export function markThreadSolved(threadId: string, replyId: string): Promise<ServiceResult<boolean>> {
-  const thread = threads.find((t) => t.id === threadId);
-  const reply = replies.find((r) => r.id === replyId);
-  if (!thread || !reply) {
-    return Promise.resolve({ data: null, error: new Error('Thread or reply not found') });
+  if (error) {
+    console.error('Forum başlığı oluşturulamadı:', error);
+    return { success: false, error } as const;
   }
 
-  replies.forEach((r) => {
-    if (r.thread_id === threadId) {
-      r.is_solution = r.id === replyId;
-    }
-  });
-  return Promise.resolve({ data: true, error: null });
+  return { success: true, data } as const;
 }
 
-export function buildThreadPath(thread: ForumThread) {
-  return `/forum/konu/${thread.slug || thread.id}-${thread.id}`;
+export async function createForumReply(reply: Omit<ForumReply, 'id' | 'created_at' | 'updated_at'>) {
+  const now = new Date().toISOString();
+  const payload = {
+    ...reply,
+    created_at: now,
+    updated_at: now,
+  };
+
+  const { data, error } = await supabase.from('forum_replies').insert(payload).select().single();
+
+  if (error) {
+    console.error('Yanıt eklenemedi:', error);
+    return { success: false, error } as const;
+  }
+
+  await supabase
+    .from('forum_threads')
+    .update({ last_activity_at: now })
+    .eq('id', reply.thread_id);
+
+  return { success: true, data } as const;
+}
+
+export async function markThreadSolved(threadId: string, replyId: string) {
+  const { error } = await supabase
+    .from('forum_threads')
+    .update({
+      status: 'resolved',
+      solution_reply_id: replyId,
+      last_activity_at: new Date().toISOString(),
+    })
+    .eq('id', threadId);
+
+  if (error) {
+    console.error('Çözüm işaretleme hatası:', error);
+    return { success: false, error } as const;
+  }
+
+  await supabase
+    .from('forum_replies')
+    .update({ is_solution: true })
+    .eq('id', replyId);
+
+  return { success: true } as const;
+}
+
+export function getMockForumData() {
+  return { threads: mockThreads, replies: mockReplies };
 }

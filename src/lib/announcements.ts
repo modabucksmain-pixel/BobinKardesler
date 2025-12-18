@@ -15,29 +15,23 @@ const baseAnnouncementSelect = () =>
     .order('priority', { ascending: false })
     .order('publish_at', { ascending: false });
 
-export async function getPublishedAnnouncements(
-  limit?: number,
-): Promise<{ data: Announcement[]; error: Error | null }> {
-  try {
-    const query = baseAnnouncementSelect()
-      .eq('published', true)
-      .lte('publish_at', new Date().toISOString());
+export async function getPublishedAnnouncements(limit?: number) {
+  const query = baseAnnouncementSelect()
+    .eq('published', true)
+    .lte('publish_at', new Date().toISOString());
 
-    if (limit) {
-      query.limit(limit);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      throw error;
-    }
-
-    return { data: data || [], error: null };
-  } catch (err) {
-    console.error('Error fetching announcements:', err);
-    return { data: [], error: err instanceof Error ? err : new Error('Unknown error') };
+  if (limit) {
+    query.limit(limit);
   }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching announcements:', error);
+    return [] as Announcement[];
+  }
+
+  return data || [];
 }
 
 export async function getAnnouncement(id: string) {

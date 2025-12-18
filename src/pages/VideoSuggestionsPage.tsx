@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Lightbulb, ThumbsUp, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useNotification } from '../contexts/NotificationContext';
@@ -26,7 +26,11 @@ export function VideoSuggestionsPage() {
     submitter_name: '',
   });
 
-  const loadSuggestions = useCallback(async () => {
+  useEffect(() => {
+    loadSuggestions();
+  }, []);
+
+  async function loadSuggestions() {
     setLoading(true);
     setErrorMessage(null);
 
@@ -42,21 +46,16 @@ export function VideoSuggestionsPage() {
       }
 
       setSuggestions(data ?? []);
-    } catch (err: unknown) {
-      const code = typeof err === 'object' && err !== null && 'code' in err ? (err as { code?: string }).code : undefined;
+    } catch (err: any) {
+      const code = err?.code || 'VS-LOAD-UNKNOWN';
       const message = 'Öneriler yüklenirken bir sorun oluştu. Lütfen yeniden deneyin.';
-      const errorCode = code || 'VS-LOAD-UNKNOWN';
-      setErrorMessage(`${message} (Hata kodu: ${errorCode})`);
-      showError(`${message} (Hata kodu: ${errorCode})`);
+      setErrorMessage(`${message} (Hata kodu: ${code})`);
+      showError(`${message} (Hata kodu: ${code})`);
       console.error('Video suggestions load error', err);
     } finally {
       setLoading(false);
     }
-  }, [showError]);
-
-  useEffect(() => {
-    loadSuggestions();
-  }, [loadSuggestions]);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -87,12 +86,11 @@ export function VideoSuggestionsPage() {
       pushSuccess('Fikriniz başarıyla gönderildi!');
       setTimeout(() => setShowSuccessBanner(false), 5000);
       loadSuggestions();
-    } catch (err: unknown) {
-      const code = typeof err === 'object' && err !== null && 'code' in err ? (err as { code?: string }).code : undefined;
+    } catch (err: any) {
+      const code = err?.code || 'VS-SUBMIT-UNKNOWN';
       const message = 'Fikriniz gönderilirken bir hata oluştu. Lütfen tekrar deneyin.';
-      const errorCode = code || 'VS-SUBMIT-UNKNOWN';
-      setErrorMessage(`${message} (Hata kodu: ${errorCode})`);
-      showError(`${message} (Hata kodu: ${errorCode})`);
+      setErrorMessage(`${message} (Hata kodu: ${code})`);
+      showError(`${message} (Hata kodu: ${code})`);
       console.error('Video suggestion submit error', err);
     } finally {
       setSubmitting(false);
@@ -118,12 +116,11 @@ export function VideoSuggestionsPage() {
 
       localStorage.setItem(votedKey, 'true');
       loadSuggestions();
-    } catch (err: unknown) {
-      const code = typeof err === 'object' && err !== null && 'code' in err ? (err as { code?: string }).code : undefined;
+    } catch (err: any) {
+      const code = err?.code || 'VS-VOTE-UNKNOWN';
       const message = 'Oy verilirken bir hata oluştu. Lütfen tekrar deneyin.';
-      const errorCode = code || 'VS-VOTE-UNKNOWN';
-      setErrorMessage(`${message} (Hata kodu: ${errorCode})`);
-      showError(`${message} (Hata kodu: ${errorCode})`);
+      setErrorMessage(`${message} (Hata kodu: ${code})`);
+      showError(`${message} (Hata kodu: ${code})`);
       console.error('Video suggestion vote error', err);
     }
   }
